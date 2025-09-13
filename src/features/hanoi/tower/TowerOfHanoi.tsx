@@ -15,7 +15,6 @@ export function TowerOfHanoi() {
         <Observer>
             {() => (
                 <>
-                    <button onClick={() => model.state = [0, 1, 2]}>Reset</button>
                     <TowerOfHanoiView
                         numPegs={model.pegNum}
                         numDisks={model.diskNum}

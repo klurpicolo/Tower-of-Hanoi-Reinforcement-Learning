@@ -1,16 +1,15 @@
 import './App.css'
+import { MantineProvider } from '@mantine/core'
 // import { Count } from './features/example/count/Count'
 import DisplayAndControl from './features/hanoi/DisplayAndControl'
-import { TowerOfHanoi } from './features/hanoi/tower/TowerOfHanoi'
 
 function App() {
 
   return (
-    <>
+    <MantineProvider>
       {/* <Count></Count> */}
-      <TowerOfHanoi></TowerOfHanoi>
       <DisplayAndControl></DisplayAndControl>
-    </>
+    </MantineProvider>
   )
 }
 
