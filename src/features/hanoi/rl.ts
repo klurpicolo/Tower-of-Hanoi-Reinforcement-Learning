@@ -1,4 +1,8 @@
 type State = number[];
+// stable by value use for comparison
+const keyOf = (s: ReadonlyArray<number>) => s.join("|"); 
+
+
 class Action {
     diskNum: number
     from: number
@@ -10,6 +14,7 @@ class Action {
         this.to = to;
     }
 }
+
 
 type TransitionProp = (state: State, action: Action) => {nextState: State, prop: number};
 type Reward = (state: State, action: Action, nextState: State) => number;
@@ -24,5 +29,5 @@ type SingleTransition = {
 type Episode = SingleTransition[];
 
 
-export type { State, TransitionProp, Reward, Policy };
-    export { Action, type SingleTransition, type Episode };
+export type { State, TransitionProp, Reward, Policy, SingleTransition, Episode};
+export { keyOf, Action };

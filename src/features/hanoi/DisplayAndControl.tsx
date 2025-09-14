@@ -4,6 +4,7 @@ import { Observer } from "mobx-react-lite";
 import { TowerOfHanoiView } from "./tower/TowerOfHanoiView";
 import { NumberInput, Button, Group, Alert, Flex } from "@mantine/core";
 import type { Episode } from "./rl";
+import { optimal3DiskPolicy } from "../../reinforcement/solver";
 
 
 function replayEpisode(episode: Episode, model: TowerOfHanoiModel, interval: number) {
@@ -14,8 +15,41 @@ function replayEpisode(episode: Episode, model: TowerOfHanoiModel, interval: num
     });
 }
 
+function playOptimalPolicy(model: TowerOfHanoiModel, interval: number) {
+    let stepCount = 0;
+    const maxSteps = 20;
+    
+    const playNextMove = () => {
+        if (model.isSolved) {
+            console.log("Puzzle solved!");
+            return;
+        }
+        
+        if (stepCount >= maxSteps) {
+            console.log("Max steps reached, stopping");
+            return;
+        }
+        
+        const action = optimal3DiskPolicy(model.state);
+        
+        try {
+            model.moveDisk(action);
+            stepCount++;
+            console.log(`Step ${stepCount}: Moved disk ${action.diskNum} from peg ${action.from} to peg ${action.to}`);
+            
+            // Schedule next move
+            setTimeout(playNextMove, interval);
+        } catch (error) {
+            console.error("Error applying optimal action:", error);
+        }
+    };
+    
+    // Start playing
+    playNextMove();
+}
 
-const exampleEpisode: Episode = [
+
+const optimalEpisode: Episode = [
     {
         state: [0, 0, 0],
         action: { diskNum: 0, from: 0, to: 2 },
@@ -82,12 +116,16 @@ export default function DisplayAndControl() {
     };
 
     const handleReplay = () => {
-        replayEpisode(exampleEpisode, model, 1000);
+        replayEpisode(optimalEpisode, model, 300);
     };
 
     const handleReset = () => {
         model.reset();
-    }
+    };
+
+    const handlePlayOptimal = () => {
+        playOptimalPolicy(model, 500);
+    };
 
     return (
         <Observer>
@@ -130,6 +168,9 @@ export default function DisplayAndControl() {
                             </Button>
                             <Button onClick={handleReplay} color="green" size="lg">
                                 Replay Episode
+                            </Button>
+                            <Button onClick={handlePlayOptimal} color="violet" size="lg">
+                                Play Optimal
                             </Button>
                             <Button onClick={handleReset} color="red" size="lg">
                                 Reset
