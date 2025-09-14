@@ -43,6 +43,7 @@ export default class TowerOfHanoiModel {
             throw new Error(`Cannot move disk ${diskNum} on top of smaller disk ${toDisks[0]} on peg ${to}`);
         }
         // Create a new array to ensure MobX detects the change
+        console.log("Moving disk", diskNum, "from", from, "to", to);
         const newState = [...this.state];
         newState[diskNum] = to;
         this.state = newState;
