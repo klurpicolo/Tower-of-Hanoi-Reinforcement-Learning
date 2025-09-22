@@ -2,39 +2,10 @@ import { ReactFlow, Background, Controls, useNodesState } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { TextUpdaterNode } from './TextUpdaterNode';
 import { TowerStateNode } from './TowerStateNode';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { edges, initialNodes } from './initNode';
 
-const initialNodes = [
-  { 
-    id: '4', 
-    position: { x: 300, y: 0 }, 
-    data: { 
-      label: 'Node 4',
-      value: 0, 
-      peg1: [0,1,2], 
-      peg2: [], 
-      peg3: [] 
-    }, 
-    type: 'towerOfHanoi'
-  },
-  { 
-    id: '5', 
-    position: { x: 300, y: 400 }, 
-    data: { 
-      label: 'Node 5',
-      value: 2, 
-      peg1: [], 
-      peg2: [], 
-      peg3: [0,1,2] 
-    }, 
-    type: 'towerOfHanoi'
-  }
-];
 
-const edges = [
-  { id: 'e1-2', source: '4', target: '5' },
-  // Add your edges here if needed
-];
 
 const nodeTypes = {
   textUpdater: TextUpdaterNode,
@@ -43,49 +14,92 @@ const nodeTypes = {
 
 export default function LearnFlow() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [isRunning, setIsRunning] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
 
-  const [mockStateValue, setMockStateValue] = useState(0);
+  // Update sequence: [nodeId, value, nodeId, value, ...]
+  const updateSequence = [1, 0, 2, 1, 1, 2, 2, 3];
 
-
-  useEffect(() => {
+  const updateNode = useCallback((nodeId: string, value: number) => {
     setNodes((nds) =>
       nds.map((node) => {
-        if (node.id === '4') {
-          // Type-safe update: preserve the correct peg types for node 4
+        if (node.id === nodeId) {
           return {
             ...node,
             data: {
               ...node.data,
-              value: mockStateValue,
-              // Ensure peg1, peg2, peg3 types are preserved
-              // peg1: Array.isArray(node.data.peg1) ? node.data.peg1 : [],
-              // peg2: Array.isArray(node.data.peg2) ? node.data.peg2 : [],
-              // peg3: Array.isArray(node.data.peg3) ? node.data.peg3 : [],
+              value: value,
+              background: 'lightgreen', // Green background during update
             },
           };
         }
         return node;
       }) as typeof nds
     );
-  }, [mockStateValue, setNodes]);
+  }, [setNodes]);
+
+  const resetNodeColors = useCallback(() => {
+    setNodes((nds) =>
+      nds.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          background: 'white', // Reset to white
+        },
+      })) as typeof nds
+    );
+  }, [setNodes]);
+
+  const runSequence = useCallback(async () => {
+    if (isRunning) return;
+    
+    setIsRunning(true);
+    setCurrentStep(0);
+    resetNodeColors();
+
+    for (let i = 0; i < updateSequence.length; i += 2) {
+      const nodeId = updateSequence[i].toString();
+      const value = updateSequence[i + 1];
+      
+      setCurrentStep(i / 2 + 1);
+      
+      // Reset all nodes to white first
+      resetNodeColors();
+      
+      // Then update the current node with green background
+      updateNode(nodeId, value);
+      
+      // Wait for 1 second
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    // Reset all nodes to white at the end
+    resetNodeColors();
+    setIsRunning(false);
+  }, [isRunning, updateNode, resetNodeColors]);
 
   return (
     <div style={{ height: '100vh', width: '100vw' }}>
       <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 10 }}>
         <button 
-          onClick={() => setMockStateValue(mockStateValue + 1)}
+          onClick={runSequence}
+          disabled={isRunning}
           style={{
             padding: '8px 16px',
-            backgroundColor: '#0078ff',
+            backgroundColor: isRunning ? '#ccc' : '#0078ff',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px'
+            cursor: isRunning ? 'not-allowed' : 'pointer',
+            fontSize: '14px',
+            marginRight: '10px'
           }}
         >
-          Update Tower Value
+          {isRunning ? `Running... Step ${currentStep}/4` : 'Run Sequence'}
         </button>
+        <span style={{ fontSize: '14px', color: '#333' }}>
+          Sequence: [4→0, 5→1, 4→2, 5→3]
+        </span>
       </div>
       <ReactFlow 
         nodes={nodes} 
