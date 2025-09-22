@@ -5,6 +5,7 @@ import { TowerOfHanoiView } from "./tower/TowerOfHanoiView";
 import { NumberInput, Button, Group, Alert, Flex } from "@mantine/core";
 import type { Episode } from "./rl";
 import { optimal3DiskPolicy } from "../../reinforcement/solver";
+import { Stats } from "./stats/Stats";
 
 
 function replayEpisode(episode: Episode, model: TowerOfHanoiModel, interval: number) {
@@ -53,44 +54,37 @@ const optimalEpisode: Episode = [
     {
         state: [0, 0, 0],
         action: { diskNum: 0, from: 0, to: 2 },
-        reward: 0,
-        nextState: [2, 0, 0]
+        reward: 0
     },
     {
         state: [2, 0, 0],
         action: { diskNum: 1, from: 0, to: 1 },
-        reward: 0,
-        nextState: [2, 1, 0]
+        reward: 0
     },
     {
         state: [2, 1, 0],
         action: { diskNum: 0, from: 2, to: 1 },
-        reward: 0,
-        nextState: [1, 1, 0]
+        reward: 0
     },
     {
         state: [1, 1, 0],
         action: { diskNum: 2, from: 0, to: 2 },
-        reward: 0,
-        nextState: [1, 1, 2]
+        reward: 0
     },
     {
         state: [1, 1, 2],
         action: { diskNum: 0, from: 1, to: 0 },
-        reward: 0,
-        nextState: [0, 1, 2]
+        reward: 0
     },
     {
         state: [0, 1, 2],
         action: { diskNum: 1, from: 1, to: 2 },
-        reward: 0,
-        nextState: [0, 2, 2]
+        reward: 0
     },
     {
         state: [0, 2, 2],
         action: { diskNum: 0, from: 0, to: 2 },
-        reward: 0,
-        nextState: [2, 2, 2]
+        reward: 0
     }
 ];
 
@@ -187,6 +181,7 @@ export default function DisplayAndControl() {
                         numDisks={model.diskNum}
                         state={model.state}
                     />
+                    <Stats></Stats>
                 </div>
             )}
         </Observer>
