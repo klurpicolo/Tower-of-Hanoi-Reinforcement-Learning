@@ -10,6 +10,7 @@ import { TowerOfHanoi } from "../../hanoi/tower2/TowerOfHanoi";
 // }
 
 export type TowerStateNode = Node<{
+  label: string;
   value: number;
   peg1: number[];
   peg2: number[];
