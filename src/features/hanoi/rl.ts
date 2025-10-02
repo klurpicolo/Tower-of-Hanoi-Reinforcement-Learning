@@ -12,6 +12,10 @@ class Action {
         this.from = from;
         this.to = to;
     }
+
+    toString(): string {
+        return `disk ${this.diskNum}: ${this.from}→${this.to}`;
+    }
 }
 
 type TransitionProp = (state: State, action: Action) => {nextState: State, prop: number};
