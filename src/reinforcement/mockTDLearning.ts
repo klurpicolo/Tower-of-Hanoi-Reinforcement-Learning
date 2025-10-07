@@ -7,7 +7,6 @@ import { Action, keyOf, type State } from '../features/hanoi/rl';
  */
 export class MockTDLearning {
   private rlStream = getRLStream();
-  private qValues: Map<string, number> = new Map();
   private qTable: Map<string, number> = new Map();
   private learningRate = 0.1;
   private discountFactor = 0.9;
@@ -18,10 +17,6 @@ export class MockTDLearning {
   private maxStepsPerEpisode: number = 50;
 
   constructor() {
-    // Initialize Q-values for all nodes
-    for (let i = 1; i <= 9; i++) {
-      this.qValues.set(i.toString(), Math.random() * 0.5 - 0.25); // Random initial values
-    }
 
     this.initializeQtable();
   }
@@ -41,7 +36,7 @@ export class MockTDLearning {
               const qKey = `${stateKey}_${actionKey}`;
               // console.log(`state key ${stateKey} : ${qKey}`)
               // Initialize value as 0
-              this.qValues.set(qKey, 0); 
+              this.qTable.set(qKey, 0); 
             }
           }
         }
@@ -97,7 +92,8 @@ export class MockTDLearning {
         
         // Stream update to LearnFlow
         const stateKey = keyOf(state);
-        this.rlStream.streamUpdate('1', this.getQValue(state, action), reward, this.getActionKey(action));
+        // console.log(`state key ${stateKey}`, this.getQValuesForState(state), this.getQValueForUI(state))
+        this.rlStream.streamUpdate(stateKey, this.getQValueForUI(state), reward, this.getActionKey(action));
         this.rlStream.incrementStep();
 
         episodeReward += reward;
@@ -111,6 +107,12 @@ export class MockTDLearning {
         // Check if solved
         if (this.isGoalState(nextState)) {
           solved = true
+          this.rlStream.streamUpdate(keyOf(nextState), this.getQValueForUI(nextState), reward, this.getActionKey(action));
+          this.rlStream.incrementStep();
+          break;
+        }
+
+        if(!this.isRunning){
           break;
         }
       }
@@ -134,6 +136,10 @@ export class MockTDLearning {
       if (episode % 10 === 0 || solved) {
         console.log(`Episode ${episode}: ${solved ? 'SOLVED' : 'FAILED'} in ${num_steps} steps, ε=${this.epsilon.toFixed(3)}, Success Rate=${(this.trainingStats.successfulEpisodes / this.trainingStats.totalEpisodes * 100).toFixed(1)}%`);
       }
+
+      if(!this.isRunning){
+        break;
+      }
     }
 
     this.isRunning = false;
@@ -149,41 +155,15 @@ export class MockTDLearning {
   }
 
   /**
-   * Perform TD update
-   */
-  private tdUpdate(currentValue: number, reward: number): number {
-    // Simple TD(0) update: Q(s,a) = Q(s,a) + α[r + γ*max(Q(s',a')) - Q(s,a)]
-    // For simplicity, we'll use a random target value
-    const targetValue = Math.random() * 2 - 1; // Random target between -1 and 1
-    const tdError = reward + this.discountFactor * targetValue - currentValue;
-    return currentValue + this.learningRate * tdError;
-  }
-
-  /**
    * Generate a reward based on node and context
    */
   private generateReward(_state: State, _action: Action, nextState: State): number {
     if (this.isGoalState(nextState)) {
-      return 100; // Large reward for reaching goal
+      return 50; // Large reward for reaching goal
     }
     
     // Small negative reward for each step to encourage efficiency
-    return -1;
-  }
-
-  /**
-   * Get average Q-value across all states
-   */
-  private getAverageQValue(): number {
-    const values = Array.from(this.qValues.values());
-    return values.reduce((sum, val) => sum + val, 0) / values.length;
-  }
-
-  /**
-   * Get current Q-values
-   */
-  getQValues(): Map<string, number> {
-    return new Map(this.qValues);
+    return -0.5;
   }
 
   getQTable(): void {
@@ -199,7 +179,6 @@ export class MockTDLearning {
    * Reset Q-values and learning parameters
    */
   reset(): void {
-    this.qValues.clear();
     this.qTable.clear();
     this.learningRate = 0.1;
     this.discountFactor = 0.9;
@@ -212,12 +191,8 @@ export class MockTDLearning {
       averageSteps: 0,
       bestSteps: Infinity
     };
-    
-    // Reinitialize Q-values
-    for (let i = 1; i <= 9; i++) {
-      this.qValues.set(i.toString(), Math.random() * 0.5 - 0.25);
-    }
     this.initializeQtable();
+    this.rlStream.resetNodes();
   }
 
   private getValidActions(state: State): Action[] {
@@ -311,6 +286,21 @@ export class MockTDLearning {
     }
     
     return this.qTable.get(qKey)!;
+  }
+
+  private getQValueForUI(state: State): number {
+    const validActions = this.getValidActions(state);
+    let bestAction = validActions[0];
+    let bestQValue = this.getQValue(state, bestAction);
+    for (const action of validActions) {
+      const qValue = this.getQValue(state, action);
+      // console.log(`    action: ${action} qValue: ${qValue}`)
+      if (qValue > bestQValue) {
+        bestQValue = qValue;
+        bestAction = action;
+      }
+    }
+    return bestQValue;
   }
 
   /**
@@ -408,7 +398,7 @@ export class MockTDLearning {
                 bestAction = action;
               }
             }
-            console.log(`state key ${stateKey} : ${bestAction}`)
+            // console.log(`state key ${stateKey} : ${bestAction} : ${bestQValue}`)
             policy.set(stateKey, bestAction);
           }
         }
@@ -421,10 +411,11 @@ export class MockTDLearning {
   /**
    * Solve Tower of Hanoi using the learned policy
    */
-  solveWithPolicy(): { solution: Action[], steps: number, solved: boolean } {
+  solveWithPolicy(): { stateChanges: string[], solution: Action[], steps: number, solved: boolean } {
     const policy = this.getOptimalPolicy();
     let state: State = [0, 0, 0];
     const solution: Action[] = [];
+    let stateChanges: string[] = [keyOf(state)];
     let steps = 0;
     const maxSteps = 50;
     
@@ -439,10 +430,14 @@ export class MockTDLearning {
       
       solution.push(action);
       state = this.applyAction(state, action);
+      stateChanges.push(keyOf(state));
+      // console.log(stateKey,":", action)
+      // this.rlStream.streamUpdate(stateKey, this.getQValueForUI(state), 0, this.getActionKey(action));
       steps++;
     }
     
     return {
+      stateChanges,
       solution,
       steps,
       solved: this.isGoalState(state)
@@ -469,10 +464,6 @@ if (typeof window !== 'undefined') {
   
   (window as any).resetTDLearning = () => {
     mockTDLearning.reset();
-  };
-  
-  (window as any).getQValues = () => {
-    return mockTDLearning.getQValues();
   };
 
   (window as any).getQTable = () => {

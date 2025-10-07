@@ -1,4 +1,5 @@
 import type { RLUpdate } from '../features/example/flow/LearnFlow';
+import { stateKeyToNodeId } from '../features/example/flow/LearnFlow';
 
 /**
  * Helper class for RL algorithms to easily stream updates to LearnFlow component
@@ -23,8 +24,8 @@ export class RLStreamHelper {
    */
   streamUpdate(nodeId: string, value: number, reward?: number, action?: string): void {
     const update: RLUpdate = {
-      nodeId,
-      value,
+      nodeId: stateKeyToNodeId[nodeId],
+      value: value.toFixed(2),
       timestamp: Date.now(),
       episode: this.episodeCount,
       step: this.stepCount,
@@ -81,6 +82,15 @@ export class RLStreamHelper {
     this.episodeCount = 0;
     this.stepCount = 0;
     this.totalReward = 0;
+  }
+
+  resetNodes(): void {
+    if (typeof window !== 'undefined' && (window as any).resetAllNodes) {
+      (window as any).resetAllNodes();
+    } else {
+      console.warn('LearnFlow resetAllNodes not found.');
+    }
+    this.reset();
   }
 }
 

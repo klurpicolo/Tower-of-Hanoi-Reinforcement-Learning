@@ -1,128 +1,92 @@
+// InitNodes.ts
+
+const colPos = 250
+const rowPos = 250
+
+// --------------------------
+// 27 Nodes for Tower of Hanoi
+// --------------------------
 export const initialNodes = [
-    { 
-      id: '1', 
-      position: { x: 150, y: 0 }, 
-      data: { 
-        label: 'Node 1',
-        value: 0, 
-        peg1: [0,1,2], 
-        peg2: [], 
-        peg3: [] 
-      }, 
-      type: 'towerOfHanoi'
-    },
-    { 
-      id: '2', 
-      position: { x: 0, y: 200 }, 
-      data: { 
-        label: 'Node 2',
-        value: 0, 
-        peg1: [1,2], 
-        peg2: [], 
-        peg3: [0] 
-      }, 
-      type: 'towerOfHanoi'
-    },
-    { 
-        id: '3', 
-        position: { x: 300, y: 200 }, 
-        data: { 
-          label: 'Node 3',
-          value: 0, 
-          peg1: [1,2], 
-          peg2: [0], 
-          peg3: [] 
-        }, 
-        type: 'towerOfHanoi'
-    },
-    { 
-        id: '4', 
-        position: { x: 600, y: 200 }, 
-        data: { 
-          label: 'Node 4',
-          value: 0, 
-          peg1: [2], 
-          peg2: [0], 
-          peg3: [1] 
-        }, 
-        type: 'towerOfHanoi'
-    },
-    { 
-        id: '5', 
-        position: { x: 900, y: 200 }, 
-        data: { 
-          label: 'Node 5',
-          value: 0, 
-          peg1: [2], 
-          peg2: [1], 
-          peg3: [0] 
-        }, 
-        type: 'towerOfHanoi'
-    },
-    { 
-        id: '6', 
-        position: { x: 0, y: 400 }, 
-        data: { 
-          label: 'Node 6',
-          value: 0, 
-          peg1: [2], 
-          peg2: [1], 
-          peg3: [0] 
-        }, 
-        type: 'towerOfHanoi'
-      },
-      { 
-          id: '7', 
-          position: { x: 300, y: 400 }, 
-          data: { 
-            label: 'Node 7',
-            value: 0, 
-            peg1: [0,2], 
-            peg2: [1], 
-            peg3: [] 
-          }, 
-          type: 'towerOfHanoi'
-      },
-      { 
-          id: '8', 
-          position: { x: 600, y: 400 }, 
-          data: { 
-            label: 'Node 8',
-            value: 0, 
-            peg1: [0, 2], 
-            peg2: [0], 
-            peg3: [1] 
-          }, 
-          type: 'towerOfHanoi'
-      },
-      { 
-          id: '9', 
-          position: { x: 900, y: 400 }, 
-          data: { 
-            label: 'Node 9',
-            value: 0, 
-            peg1: [], 
-            peg2: [2], 
-            peg3: [0, 1] 
-          }, 
-          type: 'towerOfHanoi'
-      },
-  ];
+  { id: '1',  position: { x: 1*colPos, y: 3*rowPos },  data: { label: 'State 1', value: 0, peg1:[0,1,2], peg2:[], peg3:[], stateKey: '0|0|0' }, type:'towerOfHanoi' },
+  
+  { id: '5',  position: { x: 2*colPos, y: 1*rowPos }, data: { label: 'State 2', value: 0, peg1:[2], peg2:[], peg3:[0,1], stateKey: '2|2|0' }, type:'towerOfHanoi' },
+  { id: '4',  position: { x: 2*colPos, y: 2*rowPos }, data: { label: 'State 3', value: 0, peg1:[2], peg2:[0], peg3:[1], stateKey: '1|2|0' }, type:'towerOfHanoi' },
+  { id: '3',  position: { x: 2*colPos, y: 3*rowPos }, data: { label: 'State 4', value: 0, peg1:[1,2], peg2:[0], peg3:[], stateKey: '1|0|0' }, type:'towerOfHanoi' },
+  { id: '2',  position: { x: 2*colPos, y: 4*rowPos }, data: { label: 'State 5', value: 0, peg1:[1,2], peg2:[], peg3:[0], stateKey: '2|0|0' }, type:'towerOfHanoi' },
+  
+  { id: '9',  position: { x: 3*colPos, y: 1*rowPos }, data: { label: 'State 6', value: 0, peg1:[], peg2:[2], peg3:[0,1], stateKey: '2|2|1' }, type:'towerOfHanoi' },
+  { id: '8',  position: { x: 3*colPos, y: 2*rowPos }, data: { label: 'State 7', value: 0, peg1:[0,2], peg2:[], peg3:[1], stateKey: '0|2|0' }, type:'towerOfHanoi' },
+  { id: '7',  position: { x: 3*colPos, y: 3*rowPos }, data: { label: 'State 8', value: 0, peg1:[0,2], peg2:[1], peg3:[], stateKey: '0|1|0' }, type:'towerOfHanoi' },
+  { id: '6',  position: { x: 3*colPos, y: 4*rowPos }, data: { label: 'State 9', value: 0, peg1:[2], peg2:[1], peg3:[0], stateKey: '2|1|0' }, type:'towerOfHanoi' },
+  
+  { id: '12', position: { x: 4*colPos, y: 1*rowPos }, data: { label: 'State 10', value: 0, peg1:[], peg2:[0,2], peg3:[1], stateKey: '1|2|1' }, type:'towerOfHanoi' },
+  { id: '11', position: { x: 4*colPos, y: 2*rowPos }, data: { label: 'State 11', value: 0, peg1:[0], peg2:[2], peg3:[1], stateKey: '0|2|1' }, type:'towerOfHanoi' },
+  { id: '10', position: { x: 4*colPos, y: 4*rowPos }, data: { label: 'State 12', value: 0, peg1:[2], peg2:[0,1], peg3:[], stateKey: '1|1|0' }, type:'towerOfHanoi' },
+  
+  { id: '16', position: { x: 5*colPos, y: 1*rowPos }, data: { label: 'State 13', value: 0, peg1:[1], peg2:[0,2], peg3:[], stateKey: '1|0|1' }, type:'towerOfHanoi' },
+  { id: '15', position: { x: 5*colPos, y: 2*rowPos }, data: { label: 'State 14', value: 0, peg1:[0], peg2:[1,2], peg3:[], stateKey: '0|1|1' }, type:'towerOfHanoi' },
+  { id: '14', position: { x: 5*colPos, y: 3*rowPos }, data: { label: 'State 15', value: 0, peg1:[], peg2:[0,1,2], peg3:[], stateKey: '1|1|1' }, type:'towerOfHanoi' },
+  { id: '13', position: { x: 5*colPos, y: 4*rowPos }, data: { label: 'State 16', value: 0, peg1:[], peg2:[0,1], peg3:[2], stateKey: '1|1|2' }, type:'towerOfHanoi' },
+  
+  { id: '18', position: { x: 6*colPos, y: 2*rowPos }, data: { label: 'State 17', value: 0, peg1:[], peg2:[1,2], peg3:[0], stateKey: '2|1|1' }, type:'towerOfHanoi' },
+  { id: '17', position: { x: 6*colPos, y: 3*rowPos }, data: { label: 'State 18', value: 0, peg1:[], peg2:[1], peg3:[0,2], stateKey: '2|1|2' }, type:'towerOfHanoi' },
+  
+  { id: '22', position: { x: 7*colPos, y: 1*rowPos }, data: { label: 'State 19', value: 0, peg1:[0,1], peg2:[2], peg3:[], stateKey: '0|0|1' }, type:'towerOfHanoi' },
+  { id: '21', position: { x: 7*colPos, y: 2*rowPos }, data: { label: 'State 20', value: 0, peg1:[1], peg2:[2], peg3:[0], stateKey: '2|0|1' }, type:'towerOfHanoi' },
+  { id: '20', position: { x: 7*colPos, y: 3*rowPos }, data: { label: 'State 21', value: 0, peg1:[1], peg2:[], peg3:[0,2], stateKey: '2|0|2' }, type:'towerOfHanoi' },
+  { id: '19', position: { x: 7*colPos, y: 4*rowPos }, data: { label: 'State 22', value: 0, peg1:[0], peg2:[1], peg3:[2], stateKey: '0|1|2' }, type:'towerOfHanoi' },
+  
+  { id: '24', position: { x: 8*colPos, y: 2*rowPos }, data: { label: 'State 23', value: 0, peg1:[0,1], peg2:[], peg3:[2], stateKey: '0|0|2' }, type:'towerOfHanoi' },
+  { id: '23', position: { x: 8*colPos, y: 3*rowPos }, data: { label: 'State 24', value: 0, peg1:[1], peg2:[0], peg3:[2], stateKey: '1|0|2' }, type:'towerOfHanoi' },
+  
+  { id: '26', position: { x: 9*colPos, y: 3*rowPos }, data: { label: 'State 25', value: 0, peg1:[], peg2:[0], peg3:[1,2], stateKey: '1|2|2' }, type:'towerOfHanoi' },
+  { id: '25', position: { x: 9*colPos, y: 4*rowPos }, data: { label: 'State 26', value: 0, peg1:[0], peg2:[], peg3:[1,2], stateKey: '0|2|2' }, type:'towerOfHanoi' },
+  
+  { id: '27', position: { x: 10*colPos, y: 3*rowPos }, data: { label: 'State 27', value: 0, peg1:[], peg2:[], peg3:[0,1,2], stateKey: '2|2|2' }, type:'towerOfHanoi' },
+];
 
 
-
+// --------------------------
+// All legal edges between nodes
+// --------------------------
 export const edges = [
-    { id: 'e1-2', source: '1', sourceHandle: "bottom", target: '2', targetHandle: "top" },
-    { id: 'e1-3', source: '1', sourceHandle: "right", target: '3', targetHandle: "top" },
-    { id: 'e2-3', source: '2', sourceHandle: "right", target: '3', targetHandle: "left" },
-    { id: 'e2-6', source: '2', sourceHandle: "bottom", target: '6', targetHandle: "top" },
-    { id: 'e3-4', source: '3', sourceHandle: "right", target: '4', targetHandle: "left" },
-    { id: 'e4-5', source: '4', sourceHandle: "right", target: '5', targetHandle: "left" },
-    { id: 'e4-8', source: '4', sourceHandle: "bottom", target: '8', targetHandle: "top" },
-    { id: 'e5-9', source: '5', sourceHandle: "bottom", target: '9', targetHandle: "top" },
-    { id: 'e6-7', source: '6', sourceHandle: "right", target: '7', targetHandle: "left" },
-    { id: 'e7-8', source: '7', sourceHandle: "right", target: '8', targetHandle: "left" },
-    { id: 'e8-9', source: '8', sourceHandle: "right", target: '9', targetHandle: "left" },
-    { id: 'e8-5', source: '8', sourceHandle: "right", target: '5', targetHandle: "left" },
-// Add your edges here if needed
+  { id: 'e1-2', source: '1', sourceHandle:"bottom-b", target:'2', targetHandle:"left-a" },
+  { id: 'e1-3', source: '1', sourceHandle:"right-a", target:'3', targetHandle:"left-a" },
+  { id: 'e2-3', source: '2', sourceHandle:"top-a", target:'3', targetHandle:"bottom-a" },
+  { id: 'e2-6', source: '2', sourceHandle:"right-a", target:'6', targetHandle:"left-a" },
+  { id: 'e3-4', source: '3', sourceHandle:"top-a", target:'4', targetHandle:"bottom-a" },
+  { id: 'e4-5', source: '4', sourceHandle:"top-a", target:'5', targetHandle:"bottom-a" },
+  { id: 'e4-8', source: '4', sourceHandle:"right-b", target:'8', targetHandle:"left-b" },
+  { id: 'e5-9', source: '5', sourceHandle:"right-a", target:'9', targetHandle:"left-a" },
+  { id: 'e5-8', source: '5', sourceHandle:"right-b", target:'8', targetHandle:"left-a" },
+  { id: 'e6-7', source: '6', sourceHandle:"top-a", target:'7', targetHandle:"bottom-a" },
+  { id: 'e6-10', source: '6', sourceHandle:"right-a", target:'10', targetHandle:"right-a" },
+  { id: 'e7-8', source: '7', sourceHandle:"top-a", target:'8', targetHandle:"bottom-a" },
+  { id: 'e7-10', source: '7', sourceHandle:"right-b", target:'10', targetHandle:"top-a" },
+  { id: 'e9-11', source: '9', sourceHandle:"right-b", target:'11', targetHandle:"left-a" },
+  { id: 'e9-12', source: '9', sourceHandle:"right-a", target:'12', targetHandle:"left-a" },
+  { id: 'e10-13', source: '10', sourceHandle:"right-a", target:'13', targetHandle:"left-a" },
+  { id: 'e11-12', source: '11', sourceHandle:"top-a", target:'12', targetHandle:"bottom-a" },
+  { id: 'e11-15', source: '11', sourceHandle:"right-a", target:'15', targetHandle:"left-a" },
+  { id: 'e12-16', source: '12', sourceHandle:"right-a", target:'16', targetHandle:"left-a" },
+  { id: 'e13-17', source: '13', sourceHandle:"right-a", target:'17', targetHandle:"bottom-a" },
+  { id: 'e13-19', source: '13', sourceHandle:"right-b", target:'19', targetHandle:"left-b" },
+  { id: 'e14-15', source: '14', sourceHandle:"top-a", target:'15', targetHandle:"bottom-a" },
+  { id: 'e14-18', source: '14', sourceHandle:"top-b", target:'18', targetHandle:"bottom-a" },
+  { id: 'e15-18', source: '15', sourceHandle:"right-a", target:'18', targetHandle:"left-a" },
+  { id: 'e16-22', source: '16', sourceHandle:"right-a", target:'22', targetHandle:"left-a" },
+  { id: 'e16-21', source: '16', sourceHandle:"right-b", target:'21', targetHandle:"top-a" },
+  { id: 'e17-19', source: '17', sourceHandle:"bottom-b", target:'19', targetHandle:"left-a" },
+  { id: 'e17-20', source: '17', sourceHandle:"right-a", target:'20', targetHandle:"left-a" },
+  { id: 'e18-21', source: '18', sourceHandle:"right-a", target:'21', targetHandle:"left-a" },
+  { id: 'e19-25', source: '19', sourceHandle:"right-a", target:'25', targetHandle:"left-a" },
+  { id: 'e20-23', source: '20', sourceHandle:"right-a", target:'23', targetHandle:"left-a" },
+  { id: 'e20-24', source: '20', sourceHandle:"top-b", target:'24', targetHandle:"bottom-a" },
+  { id: 'e21-22', source: '21', sourceHandle:"top-b", target:'22', targetHandle:"bottom-b" },
+  { id: 'e22-24', source: '22', sourceHandle:"right-b", target:'24', targetHandle:"top-a" },
+  { id: 'e23-24', source: '23', sourceHandle:"top-b", target:'24', targetHandle:"bottom-b" },
+  { id: 'e23-26', source: '23', sourceHandle:"right-a", target:'26', targetHandle:"left-a" },
+  { id: 'e25-26', source: '25', sourceHandle:"top-a", target:'26', targetHandle:"bottom-a" },
+  { id: 'e25-27', source: '25', sourceHandle:"right-a", target:'27', targetHandle:"bottom-a" },
+  { id: 'e26-27', source: '26', sourceHandle:"right-a", target:'27', targetHandle:"left-a" },
 ];

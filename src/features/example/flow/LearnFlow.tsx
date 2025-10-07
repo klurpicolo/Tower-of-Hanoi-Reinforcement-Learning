@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { edges, initialNodes } from './initNode';
 import { mockTDLearning } from '../../../reinforcement/mockTDLearning';
 
+
 // Types for RL streaming data
 export interface RLUpdate {
   nodeId: string;
@@ -28,12 +29,17 @@ export interface RLStreamProps {
   config?: RLStreamConfig;
 }
 
-
-
 const nodeTypes = {
   textUpdater: TextUpdaterNode,
   towerOfHanoi: TowerStateNode,
 };
+
+export const stateKeyToNodeId: Record<string, string> = {};
+
+initialNodes.forEach(node => {
+  const key = node.data.stateKey;
+  if (key) stateKeyToNodeId[key] = node.id;
+});
 
 export default function LearnFlow({ onRLUpdate, config }: RLStreamProps = {}) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -43,57 +49,85 @@ export default function LearnFlow({ onRLUpdate, config }: RLStreamProps = {}) {
     totalUpdates: 0,
     currentEpisode: 0,
     lastReward: 0,
-    averageReward: 0
+    averageReward: 0,
+    step: 0
   });
-  
+    
   // Refs for managing streaming
   const updateQueueRef = useRef<RLUpdate[]>([]);
   const processingRef = useRef(false);
   const highlightTimeoutsRef = useRef<Map<string, number>>(new Map());
-  
+
   // Configuration with defaults
   const streamConfig: Required<RLStreamConfig> = {
     updateInterval: config?.updateInterval ?? 100, // 100ms default
     highlightDuration: config?.highlightDuration ?? 500, // 500ms default
-    autoReset: config?.autoReset ?? true
+    autoReset: config?.autoReset ?? false
   };
 
-  // Update sequence: [nodeId, value, nodeId, value, ...] - kept for demo purposes
-  const updateSequence = [1, 0, 2, 1, 1, 2, 2, 3];
-
+  // --------------------------
+  // Update node value and highlight
+  // --------------------------
   // Enhanced updateNode function for RL streaming
-  const updateNode = useCallback((nodeId: string, value: number, highlight: boolean = true) => {
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === nodeId) {
+  const updateNode = useCallback(
+    (nodeId: string, value: number, highlight: boolean = true) => {
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (node.id === nodeId) {
+            // Normalize value to 0–1
+            const normalized = Math.min(Math.max(value / 5, 0), 1); // adjust max value
+  
+            // Map to green shade (higher value → darker green)
+            // Light green: rgb(240, 255, 232)
+            // Darker green: rgb(26, 186, 26)
+            const r = Math.floor(235 - 209 * normalized);
+            const g = Math.floor(255 - 49 * normalized);
+            const b = Math.floor(235 - 209 * normalized);
+            const bgColor = `rgb(${r}, ${g}, ${b})`;
+  
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                value,
+                background: highlight ? bgColor : (node.data as any).background || '#fff',
+                currentState: true,
+              },
+            };
+          }
           return {
             ...node,
             data: {
               ...node.data,
-              value: value,
-              background: highlight ? 'lightgreen' : (node.data as TowerStateNodeType['data']).background || 'white',
+              currentState: false,
             },
           };
-        }
-        return node;
-      }) as typeof nds
-    );
-  }, [setNodes]);
+        })
+      );
+    },
+    [setNodes]
+  );  
 
   // Process a single RL update
   const processRLUpdate = useCallback((update: RLUpdate) => {
-    // Update the node
+        // Update the node
     updateNode(update.nodeId, update.value, true);
+
+    setRlStats(prev => {
+      const newTotal = prev.totalUpdates + 1;
+      const reward = update.reward ?? prev.lastReward;
     
-    // Update RL statistics
-    setRlStats(prev => ({
-      totalUpdates: prev.totalUpdates + 1,
-      currentEpisode: update.episode ?? prev.currentEpisode,
-      lastReward: update.reward ?? prev.lastReward,
-      averageReward: update.reward ? 
-        (prev.averageReward * (prev.totalUpdates - 1) + update.reward) / prev.totalUpdates :
-        prev.averageReward
-    }));
+      return {
+        totalUpdates: newTotal,
+        currentEpisode: update.episode ?? prev.currentEpisode,
+        lastReward: reward,
+        step: update.step,
+        averageReward:
+          newTotal > 1
+            ? (prev.averageReward * (newTotal - 1) + reward) / newTotal
+            : reward
+      };
+    });    
 
     // Clear existing highlight timeout for this node
     const existingTimeout = highlightTimeoutsRef.current.get(update.nodeId);
@@ -107,9 +141,9 @@ export default function LearnFlow({ onRLUpdate, config }: RLStreamProps = {}) {
         updateNode(update.nodeId, update.value, false);
         highlightTimeoutsRef.current.delete(update.nodeId);
       }, streamConfig.highlightDuration);
-      
+
       highlightTimeoutsRef.current.set(update.nodeId, timeout);
-    }
+    } 
 
     // Call the optional callback
     onRLUpdate?.(update);
@@ -127,7 +161,7 @@ export default function LearnFlow({ onRLUpdate, config }: RLStreamProps = {}) {
       const update = updateQueueRef.current.shift();
       if (update) {
         processRLUpdate(update);
-        
+
         // Wait for the configured interval
         if (updateQueueRef.current.length > 0) {
           await new Promise(resolve => setTimeout(resolve, streamConfig.updateInterval));
@@ -138,18 +172,18 @@ export default function LearnFlow({ onRLUpdate, config }: RLStreamProps = {}) {
     processingRef.current = false;
   }, [processRLUpdate, streamConfig.updateInterval]);
 
-  // Public method to add RL updates to the stream
-  const addRLUpdate = useCallback((update: RLUpdate) => {
-    updateQueueRef.current.push({
-      ...update,
-      timestamp: update.timestamp || Date.now()
-    });
-    
-    // Start processing if not already running
-    if (!processingRef.current) {
-      processUpdateQueue();
-    }
-  }, [processUpdateQueue]);
+    // Public method to add RL updates to the stream
+    const addRLUpdate = useCallback((update: RLUpdate) => {
+      updateQueueRef.current.push({
+        ...update,
+        timestamp: update.timestamp || Date.now()
+      });
+      
+      // Start processing if not already running
+      if (!processingRef.current) {
+        processUpdateQueue();
+      }
+    }, [processUpdateQueue]);
 
   // Expose the addRLUpdate method globally for RL algorithm access
   useEffect(() => {
@@ -171,18 +205,23 @@ export default function LearnFlow({ onRLUpdate, config }: RLStreamProps = {}) {
     );
   }, [setNodes]);
 
+  // --------------------------
+  // Demo sequence
+  // --------------------------
+  const updateSequence = [1,0,2,1,3,1,4,2,5,3,6,4,7,5]; // Example sequence
+  const testStateKey = ['0|0|0','1|0|0'];
   const runSequence = useCallback(async () => {
     if (isRunning) return;
-    
+
     setIsRunning(true);
     setCurrentStep(0);
     resetNodeColors();
 
-    for (let i = 0; i < updateSequence.length; i += 2) {
-      const nodeId = updateSequence[i].toString();
-      const value = updateSequence[i + 1];
-      
+    for (let i = 0; i < testStateKey.length; i += 1) {
+      const nodeId = stateKeyToNodeId[testStateKey[i].toString()];
+      const value = 0;//updateSequence[i + 1];
       setCurrentStep(i / 2 + 1);
+      addRLUpdate({ nodeId, value, timestamp: Date.now() });
       
       // Reset all nodes to white first
       resetNodeColors();
@@ -193,132 +232,109 @@ export default function LearnFlow({ onRLUpdate, config }: RLStreamProps = {}) {
       // Wait for 1 second
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
-    
+
     // Reset all nodes to white at the end
     resetNodeColors();
     setIsRunning(false);
   }, [isRunning, updateNode, resetNodeColors]);
 
+  const logNodePositions = useCallback(() => {
+    nodes.forEach(node => {
+      console.log(`Node ID: ${node.data.stateKey}, X: ${node.position.x}, Y: ${node.position.y}`);
+    });
+  }, [nodes]);
+
+  const resetStats = useCallback(() => {
+    setRlStats({
+      totalUpdates: 0,
+      currentEpisode: 0,
+      lastReward: 0,
+      averageReward: 0,
+      step: 0,
+    });
+  }, []);
+
+  useEffect(() => {
+    (window as any).resetAllNodes = () => {
+      resetNodeColors();
+      setNodes(prev =>
+        prev.map(node => ({
+          ...node,
+          data: { ...node.data, value: 0, currentState: false }
+        }))
+      );
+
+      resetStats();
+    };
+  }, []);
+
   return (
-    <div style={{ height: '100vh', width: '100vw' }}>
-      <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 10 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {/* Demo Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <button 
-              onClick={runSequence}
-              disabled={isRunning}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: isRunning ? '#ccc' : '#0078ff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: isRunning ? 'not-allowed' : 'pointer',
-                fontSize: '14px'
-              }}
-            >
-              {isRunning ? `Running... Step ${currentStep}/4` : 'Run Demo Sequence'}
-            </button>
-            <span style={{ fontSize: '14px', color: '#333' }}>
-              Demo: [4→0, 5→1, 4→2, 5→3]
-            </span>
-          </div>
+    <div style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column' }}>
+  {/* Top bar for buttons */}
+  <div
+    style={{
+      textAlign: 'center',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '10px',
+      padding: '10px',
+      background: '#f9f9f9',
+      borderBottom: '1px solid #ddd',
+      zIndex: 10,
+    }}
+  >
+    {/* <button onClick={runSequence} disabled={isRunning}>
+      {isRunning ? `Running... Step ${currentStep}` : 'Run Demo Sequence'}
+    </button> */}
 
-          {/* RL Statistics */}
-          <div style={{ 
-            backgroundColor: 'rgba(255, 255, 255, 0.9)', 
-            padding: '10px', 
-            borderRadius: '4px',
-            border: '1px solid #ddd',
-            fontSize: '12px',
-            minWidth: '300px'
-          }}>
-            <h4 style={{ margin: '0 0 8px 0', fontSize: '14px' }}>RL Learning Statistics</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
-              <div>Total Updates: <strong>{rlStats.totalUpdates}</strong></div>
-              <div>Episode: <strong>{rlStats.currentEpisode}</strong></div>
-              <div>Last Reward: <strong>{rlStats.lastReward.toFixed(3)}</strong></div>
-              <div>Avg Reward: <strong>{rlStats.averageReward.toFixed(3)}</strong></div>
-            </div>
-            <div style={{ marginTop: '8px', fontSize: '11px', color: '#666' }}>
-              Queue Size: {updateQueueRef.current.length} | 
-              Processing: {processingRef.current ? 'Yes' : 'No'}
-            </div>
-          </div>
+    {/* <button onClick={logNodePositions}>Log Node Positions</button> */}
+    <button onClick={() => mockTDLearning.startLearning(50, 50)} >Start TD Learning</button>
+    <button onClick={() => mockTDLearning.stopLearning()} >Stop Learning</button>
+    <button onClick={() => mockTDLearning.reset()} >Reset</button>
 
-          {/* RL Controls */}
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <button 
-              onClick={() => mockTDLearning.startLearning(50, 300)}
-              style={{
-                padding: '6px 12px',
-                backgroundColor: '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '12px'
-              }}
-            >
-              Start TD Learning
-            </button>
-            <button 
-              onClick={() => mockTDLearning.stopLearning()}
-              style={{
-                padding: '6px 12px',
-                backgroundColor: '#dc3545',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '12px'
-              }}
-            >
-              Stop Learning
-            </button>
-            <button 
-              onClick={() => mockTDLearning.reset()}
-              style={{
-                padding: '6px 12px',
-                backgroundColor: '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '12px'
-              }}
-            >
-              Reset
-            </button>
-          </div>
-
-          {/* RL Integration Instructions */}
-          <div style={{ 
-            backgroundColor: 'rgba(240, 248, 255, 0.9)', 
-            padding: '8px', 
-            borderRadius: '4px',
-            border: '1px solid #b0d4f1',
-            fontSize: '11px',
-            maxWidth: '400px'
-          }}>
-            <strong>RL Integration:</strong> Use <code>window.addRLUpdate(update)</code> to stream updates.
-            <br />
-            <code>update = {`{nodeId: '1', value: 0.5, episode: 1, reward: 0.1}`}</code>
-            <br />
-            <strong>Console:</strong> <code>startTDLearning(episodes, delay)</code>
-          </div>
+    
+  </div>
+  {/* Stats Row */}
+  <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: '10px',
+          fontSize: '14px',
+          alignItems: 'center',
+          background: '#f9f9f9',
+          borderBottom: '1px solid #ddd',
+        }}
+      >
+        <div>
+          Episode: <strong>{rlStats.currentEpisode}</strong>
+        </div>
+        <div>Step: <strong>{rlStats.step}</strong></div>
+        <div>
+          Last Reward: <strong>{rlStats.lastReward.toFixed(2)}</strong>
+        </div>
+        <div>
+          Avg Reward: <strong>{rlStats.averageReward.toFixed(2)}</strong>
         </div>
       </div>
-      <ReactFlow 
-        nodes={nodes} 
-        edges={edges} 
-        nodeTypes={nodeTypes}
-        onNodesChange={onNodesChange}
-      >
-        <Background />
-        <Controls />
-      </ReactFlow>
-    </div>
+  {/* ReactFlow canvas below */}
+  <div style={{ flexGrow: 1 }}>
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      nodeTypes={nodeTypes}
+      onNodesChange={onNodesChange}
+      fitView
+      defaultEdgeOptions={{ 
+        style: { strokeWidth: 3, stroke: '#333' }
+      }} 
+    >
+      <Background />
+      <Controls />
+    </ReactFlow>
+  </div>
+</div>
+
   );
 }
