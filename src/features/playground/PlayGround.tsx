@@ -1,12 +1,10 @@
 import { ReactFlow, Background, Controls, useNodesState } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import {
-  TowerStateNode,
-  type TowerStateNode as TowerStateNodeType,
-} from "./TowerStateNode";
+import { TowerStateNode } from "./TowerStateNode";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { edges, initialNodes } from "./initNode";
 import { mockTDLearning } from "../../reinforcement/mockTDLearning";
+import LearningProgressChart, { type EpisodeData } from "./LearningProgressChart";
 
 function valueToRGB(value: number): string {
   const normalized = Math.min(Math.max(value / 5, 0), 1); // adjust max value
@@ -70,6 +68,8 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
     averageReward: 0,
     step: 0,
   });
+  const [episodeData, setEpisodeData] = useState<EpisodeData[]>([]);
+  const [maxEpisodes, setMaxEpisodes] = useState<number>(100);
 
   // Refs for managing streaming
   const updateQueueRef = useRef<RLUpdate[]>([]);
@@ -204,13 +204,20 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
     [processUpdateQueue],
   );
 
+  // Function to add episode data (will be called by MockTDLearning)
+  const addEpisodeData = useCallback((episode: number, reward: number, epsilon: number) => {
+    setEpisodeData(prev => [...prev, { episode, reward, epsilon }]);
+  }, []);
+
   // Expose the addRLUpdate method globally for RL algorithm access
   useEffect(() => {
     (window as any).addRLUpdate = addRLUpdate;
+    (window as any).addEpisodeData = addEpisodeData;
     return () => {
       delete (window as any).addRLUpdate;
+      delete (window as any).addEpisodeData;
     };
-  }, [addRLUpdate]);
+  }, [addRLUpdate, addEpisodeData]);
 
   const resetNodeColors = useCallback(() => {
     setNodes(
@@ -233,7 +240,21 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
       averageReward: 0,
       step: 0,
     });
+    setEpisodeData([]);
+    setMaxEpisodes(100);
   }, []);
+
+  // Start learning function that sets max episodes
+  const handleStartLearning = useCallback((episodes: number = 50) => {
+    setMaxEpisodes(episodes);
+    mockTDLearning.startLearning(episodes, 50);
+  }, []);
+
+  // Enhanced reset function that also resets the chart
+  const handleReset = useCallback(() => {
+    mockTDLearning.reset();
+    resetStats();
+  }, [resetStats]);
 
   useEffect(() => {
     (window as any).resetAllNodes = () => {
@@ -265,7 +286,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
           background: "#f9f9f9",
           borderBottom: "1px solid #ddd",
           zIndex: 10,
-          minHeight: "120px",
+          minHeight: "200px",
         }}
       >
         {/* Left Side - Controls */}
@@ -284,7 +305,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
           </div>
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
             <button 
-              onClick={() => mockTDLearning.startLearning(50, 50)}
+              onClick={() => handleStartLearning(50)}
               style={{
                 padding: "8px 12px",
                 backgroundColor: "#80A1BA",
@@ -312,7 +333,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
               Stop Learning
             </button>
             <button 
-              onClick={() => mockTDLearning.reset()}
+              onClick={handleReset}
               style={{
                 padding: "8px 12px",
                 backgroundColor: "#91C4C3",
@@ -359,29 +380,11 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
             padding: "10px",
             display: "flex",
             flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
             backgroundColor: "#fafafa",
           }}
         >
-          <div style={{ fontWeight: "bold", fontSize: "16px", marginBottom: "10px" }}>
-            Learning Progress
-          </div>
-          <div
-            style={{
-              width: "100%",
-              height: "80px",
-              backgroundColor: "white",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#666",
-              fontSize: "14px",
-            }}
-          >
-            Chart placeholder - Reward per Episode & Epsilon
+          <div style={{ height: "100%" }}>
+            <LearningProgressChart data={episodeData} maxEpisodes={maxEpisodes} />
           </div>
         </div>
       </div>

@@ -10,7 +10,7 @@ export class MockTDLearning {
   private qTable: Map<string, number> = new Map();
   private learningRate = 0.1;
   private discountFactor = 0.9;
-  private epsilon = 0.1; // Exploration rate
+  private epsilon = 0.9; // Exploration rate
   private epsilonDecay: number = 0.9;
   private minEpsilon: number = 0.01;
   private isRunning = false;
@@ -152,6 +152,11 @@ export class MockTDLearning {
         this.epsilon * this.epsilonDecay,
       );
 
+      // Send episode data to chart
+      if (typeof window !== "undefined" && (window as any).addEpisodeData) {
+        (window as any).addEpisodeData(episode, episodeReward, this.epsilon);
+      }
+
       // Log progress every 10 episodes
       if (episode % 10 === 0 || solved) {
         console.log(
@@ -208,7 +213,7 @@ export class MockTDLearning {
     this.qTable.clear();
     this.learningRate = 0.1;
     this.discountFactor = 0.9;
-    this.epsilon = 0.1;
+    this.epsilon = 0.9;
     this.isRunning = false;
 
     this.trainingStats = {
