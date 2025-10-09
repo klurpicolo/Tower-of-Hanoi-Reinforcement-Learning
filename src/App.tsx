@@ -1,6 +1,6 @@
 import "./App.css";
 import { MantineProvider } from "@mantine/core";
-import PlayGround from "./features/example/flow/PlayGround";
+import PlayGround from "./features/playground/flow/PlayGround";
 import "@xyflow/react/dist/style.css";
 
 function App() {
