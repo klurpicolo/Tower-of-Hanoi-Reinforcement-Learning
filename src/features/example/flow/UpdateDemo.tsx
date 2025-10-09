@@ -1,34 +1,34 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   ReactFlow,
   useNodesState,
   useEdgesState,
   Background,
   Panel,
-} from '@xyflow/react';
+} from "@xyflow/react";
 
-import '@xyflow/react/dist/style.css';
+import "@xyflow/react/dist/style.css";
 
 const initialNodes = [
-  { id: '1', data: { label: '-' }, position: { x: 100, y: 100 } },
-  { id: '2', data: { label: 'Node 2' }, position: { x: 100, y: 200 } },
+  { id: "1", data: { label: "-" }, position: { x: 100, y: 100 } },
+  { id: "2", data: { label: "Node 2" }, position: { x: 100, y: 200 } },
 ];
 
-const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];
+const initialEdges = [{ id: "e1-2", source: "1", target: "2" }];
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
 const UpdateNode = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  const [nodeName, setNodeName] = useState('Node 1');
-  const [nodeBg, setNodeBg] = useState('#dbdbdb');
+  const [nodeName, setNodeName] = useState("Node 1");
+  const [nodeBg, setNodeBg] = useState("#dbdbdb");
   const [nodeHidden, setNodeHidden] = useState(false);
 
   useEffect(() => {
     setNodes((nds) =>
       nds.map((node) => {
-        if (node.id === '1') {
+        if (node.id === "1") {
           // it's important that you create a new node object
           // in order to notify react flow about the change
           return {
@@ -48,7 +48,7 @@ const UpdateNode = () => {
   useEffect(() => {
     setNodes((nds) =>
       nds.map((node) => {
-        if (node.id === '1') {
+        if (node.id === "1") {
           // it's important that you create a new node object
           // in order to notify react flow about the change
           return {
@@ -68,7 +68,7 @@ const UpdateNode = () => {
   useEffect(() => {
     setNodes((nds) =>
       nds.map((node) => {
-        if (node.id === '1') {
+        if (node.id === "1") {
           // it's important that you create a new node object
           // in order to notify react flow about the change
           return {
@@ -82,7 +82,7 @@ const UpdateNode = () => {
     );
     setEdges((eds) =>
       eds.map((edge) => {
-        if (edge.id === 'e1-2') {
+        if (edge.id === "e1-2") {
           return {
             ...edge,
             hidden: nodeHidden,

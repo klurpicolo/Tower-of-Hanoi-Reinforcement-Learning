@@ -1,5 +1,5 @@
-import type { RLUpdate } from '../features/example/flow/PlayGround';
-import { stateKeyToNodeId } from '../features/example/flow/PlayGround';
+import type { RLUpdate } from "../features/example/flow/PlayGround";
+import { stateKeyToNodeId } from "../features/example/flow/PlayGround";
 
 /**
  * Helper class for RL algorithms to easily stream updates to LearnFlow component
@@ -22,7 +22,12 @@ export class RLStreamHelper {
   /**
    * Stream a node value update to the LearnFlow component
    */
-  streamUpdate(nodeId: string, value: number, reward?: number, action?: string): void {
+  streamUpdate(
+    nodeId: string,
+    value: number,
+    reward?: number,
+    action?: string,
+  ): void {
     const update: RLUpdate = {
       nodeId: stateKeyToNodeId[nodeId],
       value: value.toFixed(2),
@@ -30,14 +35,16 @@ export class RLStreamHelper {
       episode: this.episodeCount,
       step: this.stepCount,
       reward,
-      action
+      action,
     };
 
     // Use the global function exposed by LearnFlow
-    if (typeof window !== 'undefined' && (window as any).addRLUpdate) {
+    if (typeof window !== "undefined" && (window as any).addRLUpdate) {
       (window as any).addRLUpdate(update);
     } else {
-      console.warn('LearnFlow component not found. Make sure LearnFlow is mounted.');
+      console.warn(
+        "LearnFlow component not found. Make sure LearnFlow is mounted.",
+      );
     }
   }
 
@@ -71,7 +78,7 @@ export class RLStreamHelper {
     return {
       episode: this.episodeCount,
       step: this.stepCount,
-      totalReward: this.totalReward
+      totalReward: this.totalReward,
     };
   }
 
@@ -85,10 +92,10 @@ export class RLStreamHelper {
   }
 
   resetNodes(): void {
-    if (typeof window !== 'undefined' && (window as any).resetAllNodes) {
+    if (typeof window !== "undefined" && (window as any).resetAllNodes) {
       (window as any).resetAllNodes();
     } else {
-      console.warn('LearnFlow resetAllNodes not found.');
+      console.warn("LearnFlow resetAllNodes not found.");
     }
     this.reset();
   }
@@ -101,25 +108,25 @@ export const getRLStream = () => RLStreamHelper.getInstance();
 
 /**
  * Example usage for Temporal Difference Learning:
- * 
+ *
  * ```typescript
  * import { getRLStream } from './rlStreamHelper';
- * 
+ *
  * const rlStream = getRLStream();
- * 
+ *
  * // In your TD learning loop:
  * for (let episode = 0; episode < maxEpisodes; episode++) {
  *   rlStream.startEpisode();
- *   
+ *
  *   while (!isTerminal(state)) {
  *     const action = selectAction(state);
  *     const nextState = takeAction(state, action);
  *     const reward = getReward(state, action, nextState);
- *     
+ *
  *     // Update Q-values and stream to UI
  *     const newValue = updateQValue(state, action, reward, nextState);
  *     rlStream.streamUpdate(stateId, newValue, reward, action);
- *     
+ *
  *     rlStream.incrementStep();
  *     state = nextState;
  *   }
