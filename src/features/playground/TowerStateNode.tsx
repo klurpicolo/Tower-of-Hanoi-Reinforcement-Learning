@@ -1,5 +1,5 @@
 import { Handle, Position, type NodeProps, type Node } from "@xyflow/react";
-import { TowerOfHanoi } from "../../hanoi/tower2/TowerOfHanoi";
+import { TowerOfHanoi } from "../hanoi/tower2/TowerOfHanoi";
 
 // export type TowerStateNodeData = {
 //   value: number;

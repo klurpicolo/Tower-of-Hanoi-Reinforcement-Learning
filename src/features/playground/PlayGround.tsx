@@ -7,7 +7,7 @@ import {
 } from "./TowerStateNode";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { edges, initialNodes } from "./initNode";
-import { mockTDLearning } from "../../../reinforcement/mockTDLearning";
+import { mockTDLearning } from "../../reinforcement/mockTDLearning";
 
 // Types for RL streaming data
 export interface RLUpdate {

@@ -1,5 +1,5 @@
-import type { RLUpdate } from "../features/playground/flow/PlayGround";
-import { stateKeyToNodeId } from "../features/playground/flow/PlayGround";
+import type { RLUpdate } from "../features/playground/PlayGround";
+import { stateKeyToNodeId } from "../features/playground/PlayGround";
 
 /**
  * Helper class for RL algorithms to easily stream updates to LearnFlow component
