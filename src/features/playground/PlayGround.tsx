@@ -45,8 +45,6 @@ initialNodes.forEach((node) => {
 
 export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [isRunning, setIsRunning] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
   const [rlStats, setRlStats] = useState({
     totalUpdates: 0,
     currentEpisode: 0,
@@ -217,47 +215,6 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
         })) as typeof nds,
     );
   }, [setNodes]);
-
-  // --------------------------
-  // Demo sequence
-  // --------------------------
-  const updateSequence = [1, 0, 2, 1, 3, 1, 4, 2, 5, 3, 6, 4, 7, 5]; // Example sequence
-  const testStateKey = ["0|0|0", "1|0|0"];
-  const runSequence = useCallback(async () => {
-    if (isRunning) return;
-
-    setIsRunning(true);
-    setCurrentStep(0);
-    resetNodeColors();
-
-    for (let i = 0; i < testStateKey.length; i += 1) {
-      const nodeId = stateKeyToNodeId[testStateKey[i].toString()];
-      const value = 0; //updateSequence[i + 1];
-      setCurrentStep(i / 2 + 1);
-      addRLUpdate({ nodeId, value, timestamp: Date.now() });
-
-      // Reset all nodes to white first
-      resetNodeColors();
-
-      // Then update the current node with green background
-      updateNode(nodeId, value);
-
-      // Wait for 1 second
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
-
-    // Reset all nodes to white at the end
-    resetNodeColors();
-    setIsRunning(false);
-  }, [isRunning, updateNode, resetNodeColors]);
-
-  const logNodePositions = useCallback(() => {
-    nodes.forEach((node) => {
-      console.log(
-        `Node ID: ${node.data.stateKey}, X: ${node.position.x}, Y: ${node.position.y}`,
-      );
-    });
-  }, [nodes]);
 
   const resetStats = useCallback(() => {
     setRlStats({

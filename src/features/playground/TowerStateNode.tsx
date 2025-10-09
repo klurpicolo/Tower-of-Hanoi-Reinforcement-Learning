@@ -1,7 +1,6 @@
 import { Handle, Position, type NodeProps, type Node } from "@xyflow/react";
 import { TowerOfHanoi } from "../hanoi/tower/TowerOfHanoi";
 
-
 export type TowerStateNode = Node<
   {
     id: string;
