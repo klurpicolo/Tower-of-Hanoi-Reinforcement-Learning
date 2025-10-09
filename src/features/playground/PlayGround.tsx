@@ -4,7 +4,9 @@ import { TowerStateNode } from "./TowerStateNode";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { edges, initialNodes } from "./initNode";
 import { mockTDLearning } from "../../reinforcement/mockTDLearning";
-import LearningProgressChart, { type EpisodeData } from "./LearningProgressChart";
+import LearningProgressChart, {
+  type EpisodeData,
+} from "./LearningProgressChart";
 
 function valueToRGB(value: number): string {
   const normalized = Math.min(Math.max(value / 5, 0), 1); // adjust max value
@@ -205,9 +207,12 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
   );
 
   // Function to add episode data (will be called by MockTDLearning)
-  const addEpisodeData = useCallback((episode: number, reward: number, epsilon: number) => {
-    setEpisodeData(prev => [...prev, { episode, reward, epsilon }]);
-  }, []);
+  const addEpisodeData = useCallback(
+    (episode: number, reward: number, epsilon: number) => {
+      setEpisodeData((prev) => [...prev, { episode, reward, epsilon }]);
+    },
+    [],
+  );
 
   // Expose the addRLUpdate method globally for RL algorithm access
   useEffect(() => {
@@ -300,11 +305,17 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
             borderRight: "1px solid #ddd",
           }}
         >
-          <div style={{ fontWeight: "bold", fontSize: "16px", marginBottom: "5px" }}>
+          <div
+            style={{
+              fontWeight: "bold",
+              fontSize: "16px",
+              marginBottom: "5px",
+            }}
+          >
             TD Learning Controls
           </div>
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-            <button 
+            <button
               onClick={() => handleStartLearning(50)}
               style={{
                 padding: "8px 12px",
@@ -318,7 +329,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
             >
               Start TD Learning
             </button>
-            <button 
+            <button
               onClick={() => mockTDLearning.stopLearning()}
               style={{
                 padding: "8px 12px",
@@ -332,7 +343,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
             >
               Stop Learning
             </button>
-            <button 
+            <button
               onClick={handleReset}
               style={{
                 padding: "8px 12px",
@@ -347,7 +358,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
               Reset
             </button>
           </div>
-          
+
           {/* Stats in Left Panel */}
           <div
             style={{
@@ -384,7 +395,10 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
           }}
         >
           <div style={{ height: "100%" }}>
-            <LearningProgressChart data={episodeData} maxEpisodes={maxEpisodes} />
+            <LearningProgressChart
+              data={episodeData}
+              maxEpisodes={maxEpisodes}
+            />
           </div>
         </div>
       </div>
