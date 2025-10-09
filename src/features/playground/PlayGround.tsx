@@ -1,6 +1,5 @@
 import { ReactFlow, Background, Controls, useNodesState } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { TextUpdaterNode } from "./TextUpdaterNode";
 import {
   TowerStateNode,
   type TowerStateNode as TowerStateNodeType,
@@ -32,7 +31,6 @@ export interface RLStreamProps {
 }
 
 const nodeTypes = {
-  textUpdater: TextUpdaterNode,
   towerOfHanoi: TowerStateNode,
 };
 
