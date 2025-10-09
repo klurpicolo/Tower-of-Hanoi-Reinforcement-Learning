@@ -258,58 +258,134 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
         flexDirection: "column",
       }}
     >
-      {/* Top bar for buttons */}
+      {/* Top Section with Controls and Chart Space */}
       <div
         style={{
-          textAlign: "center",
           display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "10px",
-          padding: "10px",
           background: "#f9f9f9",
           borderBottom: "1px solid #ddd",
           zIndex: 10,
+          minHeight: "120px",
         }}
       >
-        {/* <button onClick={runSequence} disabled={isRunning}>
-      {isRunning ? `Running... Step ${currentStep}` : 'Run Demo Sequence'}
-    </button> */}
+        {/* Left Side - Controls */}
+        <div
+          style={{
+            flex: "0 0 300px",
+            padding: "10px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+            borderRight: "1px solid #ddd",
+          }}
+        >
+          <div style={{ fontWeight: "bold", fontSize: "16px", marginBottom: "5px" }}>
+            TD Learning Controls
+          </div>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            <button 
+              onClick={() => mockTDLearning.startLearning(50, 50)}
+              style={{
+                padding: "8px 12px",
+                backgroundColor: "#80A1BA",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "12px",
+              }}
+            >
+              Start TD Learning
+            </button>
+            <button 
+              onClick={() => mockTDLearning.stopLearning()}
+              style={{
+                padding: "8px 12px",
+                backgroundColor: "#80A1BA",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "12px",
+              }}
+            >
+              Stop Learning
+            </button>
+            <button 
+              onClick={() => mockTDLearning.reset()}
+              style={{
+                padding: "8px 12px",
+                backgroundColor: "#91C4C3",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "12px",
+              }}
+            >
+              Reset
+            </button>
+          </div>
+          
+          {/* Stats in Left Panel */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "8px",
+              fontSize: "12px",
+              marginTop: "10px",
+            }}
+          >
+            <div>
+              Episode: <strong>{rlStats.currentEpisode}</strong>
+            </div>
+            <div>
+              Step: <strong>{rlStats.step}</strong>
+            </div>
+            <div>
+              Last Reward: <strong>{rlStats.lastReward.toFixed(2)}</strong>
+            </div>
+            <div>
+              Avg Reward: <strong>{rlStats.averageReward.toFixed(2)}</strong>
+            </div>
+          </div>
+        </div>
 
-        {/* <button onClick={logNodePositions}>Log Node Positions</button> */}
-        <button onClick={() => mockTDLearning.startLearning(50, 50)}>
-          Start TD Learning
-        </button>
-        <button onClick={() => mockTDLearning.stopLearning()}>
-          Stop Learning
-        </button>
-        <button onClick={() => mockTDLearning.reset()}>Reset</button>
+        {/* Right Side - Chart Space */}
+        <div
+          style={{
+            flex: 1,
+            padding: "10px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "#fafafa",
+          }}
+        >
+          <div style={{ fontWeight: "bold", fontSize: "16px", marginBottom: "10px" }}>
+            Learning Progress
+          </div>
+          <div
+            style={{
+              width: "100%",
+              height: "80px",
+              backgroundColor: "white",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#666",
+              fontSize: "14px",
+            }}
+          >
+            Chart placeholder - Reward per Episode & Epsilon
+          </div>
+        </div>
       </div>
-      {/* Stats Row */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: "10px",
-          fontSize: "14px",
-          alignItems: "center",
-          background: "#f9f9f9",
-          borderBottom: "1px solid #ddd",
-        }}
-      >
-        <div>
-          Episode: <strong>{rlStats.currentEpisode}</strong>
-        </div>
-        <div>
-          Step: <strong>{rlStats.step}</strong>
-        </div>
-        <div>
-          Last Reward: <strong>{rlStats.lastReward.toFixed(2)}</strong>
-        </div>
-        <div>
-          Avg Reward: <strong>{rlStats.averageReward.toFixed(2)}</strong>
-        </div>
-      </div>
+
       {/* ReactFlow canvas below */}
       <div style={{ flexGrow: 1 }}>
         <ReactFlow
