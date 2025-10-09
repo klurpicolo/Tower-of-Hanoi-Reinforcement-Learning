@@ -1,5 +1,3 @@
-// InitNodes.ts
-
 const colPos = 250;
 const rowPos = 250;
 
