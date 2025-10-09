@@ -8,6 +8,19 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { edges, initialNodes } from "./initNode";
 import { mockTDLearning } from "../../reinforcement/mockTDLearning";
 
+
+function valueToRGB(value: number): string {
+  const normalized = Math.min(Math.max(value / 5, 0), 1); // adjust max value
+
+  // Map to green shade (higher value → darker green)
+  // Light green: rgb(13, 21, 9)
+  // Darker green: rgb(26, 186, 26)
+  const r = Math.floor(235 - 209 * normalized);
+  const g = Math.floor(255 - 49 * normalized);
+  const b = Math.floor(235 - 209 * normalized);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
 // Types for RL streaming data
 export interface RLUpdate {
   nodeId: string;
@@ -72,16 +85,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
       setNodes((nds) =>
         nds.map((node) => {
           if (node.id === nodeId) {
-            // Normalize value to 0–1
-            const normalized = Math.min(Math.max(value / 5, 0), 1); // adjust max value
-
-            // Map to green shade (higher value → darker green)
-            // Light green: rgb(240, 255, 232)
-            // Darker green: rgb(26, 186, 26)
-            const r = Math.floor(235 - 209 * normalized);
-            const g = Math.floor(255 - 49 * normalized);
-            const b = Math.floor(235 - 209 * normalized);
-            const bgColor = `rgb(${r}, ${g}, ${b})`;
+            const bgColor = valueToRGB(value);
 
             return {
               ...node,
