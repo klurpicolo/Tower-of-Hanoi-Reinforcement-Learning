@@ -30,7 +30,7 @@ export class RLStreamHelper {
   ): void {
     const update: RLUpdate = {
       nodeId: stateKeyToNodeId[nodeId],
-      value: value.toFixed(2),
+      value: Number(value.toFixed(2)),
       timestamp: Date.now(),
       episode: this.episodeCount,
       step: this.stepCount,

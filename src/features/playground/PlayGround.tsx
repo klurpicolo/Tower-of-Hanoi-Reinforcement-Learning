@@ -8,7 +8,6 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { edges, initialNodes } from "./initNode";
 import { mockTDLearning } from "../../reinforcement/mockTDLearning";
 
-
 function valueToRGB(value: number): string {
   const normalized = Math.min(Math.max(value / 5, 0), 1); // adjust max value
 
@@ -54,9 +53,17 @@ initialNodes.forEach((node) => {
   if (key) stateKeyToNodeId[key] = node.id;
 });
 
+type RLStat = {
+  totalUpdates: number;
+  currentEpisode: number;
+  lastReward: number;
+  averageReward: number;
+  step: number;
+};
+
 export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [rlStats, setRlStats] = useState({
+  const [rlStats, setRlStats] = useState<RLStat>({
     totalUpdates: 0,
     currentEpisode: 0,
     lastReward: 0,
@@ -126,7 +133,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
           totalUpdates: newTotal,
           currentEpisode: update.episode ?? prev.currentEpisode,
           lastReward: reward,
-          step: update.step,
+          step: update.step ?? prev.step,
           averageReward:
             newTotal > 1
               ? (prev.averageReward * (newTotal - 1) + reward) / newTotal
