@@ -41,7 +41,7 @@ initialNodes.forEach(node => {
   if (key) stateKeyToNodeId[key] = node.id;
 });
 
-export default function LearnFlow({ onRLUpdate, config }: RLStreamProps = {}) {
+export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [isRunning, setIsRunning] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
