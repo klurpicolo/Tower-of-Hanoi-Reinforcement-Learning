@@ -7,6 +7,12 @@ import { mockTDLearning } from "../../reinforcement/mockTDLearning";
 import LearningProgressChart, {
   type EpisodeData,
 } from "./LearningProgressChart";
+import { useAtomValue } from "jotai";
+import {
+  rlUpdateEventAtom,
+  episodeEventAtom,
+  resetSignalAtom,
+} from "../../state/rlAtoms";
 
 function valueToRGB(value: number): string {
   const normalized = Math.min(Math.max(value / 5, 0), 1); // adjust max value
@@ -77,6 +83,12 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
   const updateQueueRef = useRef<RLUpdate[]>([]);
   const processingRef = useRef(false);
   const highlightTimeoutsRef = useRef<Map<string, number>>(new Map());
+  const processRLUpdateRef = useRef<(update: RLUpdate) => void>(() => {});
+
+  // Atoms
+  const latestUpdate = useAtomValue(rlUpdateEventAtom);
+  const latestEpisodeEvent = useAtomValue(episodeEventAtom);
+  const resetSignal = useAtomValue(resetSignalAtom);
 
   // Configuration with defaults
   const streamConfig: Required<RLStreamConfig> = {
@@ -118,7 +130,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
         }),
       );
     },
-    [setNodes],
+    [], // Remove setNodes dependency
   );
 
   // Process a single RL update
@@ -162,8 +174,11 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
       // Call the optional callback
       onRLUpdate?.(update);
     },
-    [updateNode, streamConfig, onRLUpdate],
+    [onRLUpdate], // Only keep onRLUpdate as dependency
   );
+
+  // Store the function reference in ref to avoid dependency issues
+  processRLUpdateRef.current = processRLUpdate;
 
   // Process the update queue
   const processUpdateQueue = useCallback(async () => {
@@ -175,8 +190,8 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
 
     while (updateQueueRef.current.length > 0) {
       const update = updateQueueRef.current.shift();
-      if (update) {
-        processRLUpdate(update);
+      if (update && processRLUpdateRef.current) {
+        processRLUpdateRef.current(update);
 
         // Wait for the configured interval
         if (updateQueueRef.current.length > 0) {
@@ -188,41 +203,42 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
     }
 
     processingRef.current = false;
-  }, [processRLUpdate, streamConfig.updateInterval]);
+  }, [streamConfig.updateInterval]);
 
-  // Public method to add RL updates to the stream
-  const addRLUpdate = useCallback(
-    (update: RLUpdate) => {
-      updateQueueRef.current.push({
-        ...update,
-        timestamp: update.timestamp || Date.now(),
-      });
-
-      // Start processing if not already running
-      if (!processingRef.current) {
-        processUpdateQueue();
-      }
-    },
-    [processUpdateQueue],
-  );
-
-  // Function to add episode data (will be called by MockTDLearning)
-  const addEpisodeData = useCallback(
-    (episode: number, reward: number, epsilon: number) => {
-      setEpisodeData((prev) => [...prev, { episode, reward, epsilon }]);
-    },
-    [],
-  );
-
-  // Expose the addRLUpdate method globally for RL algorithm access
+  // When a new atom-based update arrives, enqueue it
   useEffect(() => {
-    (window as any).addRLUpdate = addRLUpdate;
-    (window as any).addEpisodeData = addEpisodeData;
-    return () => {
-      delete (window as any).addRLUpdate;
-      delete (window as any).addEpisodeData;
-    };
-  }, [addRLUpdate, addEpisodeData]);
+    if (!latestUpdate) return;
+    updateQueueRef.current.push(latestUpdate.update);
+    if (!processingRef.current) {
+      processUpdateQueue();
+    }
+  }, [latestUpdate]); // Remove processUpdateQueue from dependencies
+
+  // When a new episode event arrives, append to chart
+  useEffect(() => {
+    if (!latestEpisodeEvent) return;
+    setEpisodeData((prev) => [
+      ...prev,
+      {
+        episode: latestEpisodeEvent.event.episode,
+        reward: latestEpisodeEvent.event.reward,
+        epsilon: latestEpisodeEvent.event.epsilon,
+      },
+    ]);
+  }, [latestEpisodeEvent]);
+
+  // React to reset signal
+  useEffect(() => {
+    if (!resetSignal) return;
+    resetNodeColors();
+    setNodes((prev) =>
+      prev.map((node) => ({
+        ...node,
+        data: { ...node.data, value: 0, currentState: false },
+      })),
+    );
+    resetStats();
+  }, [resetSignal]); // Remove setNodes from dependencies
 
   const resetNodeColors = useCallback(() => {
     setNodes(
@@ -235,7 +251,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
           },
         })) as typeof nds,
     );
-  }, [setNodes]);
+  }, []); // Remove setNodes dependency
 
   const resetStats = useCallback(() => {
     setRlStats({
@@ -260,20 +276,6 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
     mockTDLearning.reset();
     resetStats();
   }, [resetStats]);
-
-  useEffect(() => {
-    (window as any).resetAllNodes = () => {
-      resetNodeColors();
-      setNodes((prev) =>
-        prev.map((node) => ({
-          ...node,
-          data: { ...node.data, value: 0, currentState: false },
-        })),
-      );
-
-      resetStats();
-    };
-  }, []);
 
   return (
     <div

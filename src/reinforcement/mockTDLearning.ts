@@ -1,5 +1,6 @@
 import { getRLStream } from "./rlStreamHelper";
 import { Action, keyOf, type State } from "../features/hanoi/rl";
+import { publishEpisodeEvent } from "../state/rlAtoms";
 
 /**
  * Mock Temporal Difference Learning algorithm for demonstration
@@ -81,10 +82,6 @@ export class MockTDLearning {
       let num_steps = 0;
 
       for (let step = 0; step < this.maxStepsPerEpisode; step++) {
-        // Select a random node to update
-        // const nodeId = (Math.floor(Math.random() * 9) + 1).toString();
-        // const currentValue = this.qValues.get(nodeId) || 0;
-
         const action = this.selectAction(state);
         const nextState = this.applyAction(state, action);
         const reward = this.generateReward(state, action, nextState);
@@ -94,7 +91,6 @@ export class MockTDLearning {
 
         // Stream update to LearnFlow
         const stateKey = keyOf(state);
-        // console.log(`state key ${stateKey}`, this.getQValuesForState(state), this.getQValueForUI(state))
         this.rlStream.streamUpdate(
           stateKey,
           this.getQValueForUI(state),
@@ -152,10 +148,12 @@ export class MockTDLearning {
         this.epsilon * this.epsilonDecay,
       );
 
-      // Send episode data to chart
-      if (typeof window !== "undefined" && (window as any).addEpisodeData) {
-        (window as any).addEpisodeData(episode, episodeReward, this.epsilon);
-      }
+      // Send episode data to chart via atom event
+      publishEpisodeEvent({
+        episode,
+        reward: episodeReward,
+        epsilon: this.epsilon,
+      });
 
       // Log progress every 10 episodes
       if (episode % 10 === 0 || solved) {
@@ -223,7 +221,7 @@ export class MockTDLearning {
       bestSteps: Infinity,
     };
     this.initializeQtable();
-    this.rlStream.resetNodes();
+    this.rlStream.reset();
   }
 
   private getValidActions(state: State): Action[] {
@@ -507,28 +505,4 @@ export const mockTDLearning = new MockTDLearning();
 /**
  * Convenience functions for browser console
  */
-if (typeof window !== "undefined") {
-  (window as any).startTDLearning = (episodes?: number, delay?: number) => {
-    mockTDLearning.startLearning(episodes, delay);
-  };
-
-  (window as any).stopTDLearning = () => {
-    mockTDLearning.stopLearning();
-  };
-
-  (window as any).resetTDLearning = () => {
-    mockTDLearning.reset();
-  };
-
-  (window as any).getQTable = () => {
-    return mockTDLearning.getQTable();
-  };
-
-  (window as any).getOptimalPolicy = () => {
-    mockTDLearning.getOptimalPolicy();
-  };
-
-  (window as any).solveTowerOfHanoi = () => {
-    return mockTDLearning.solveWithPolicy();
-  };
-}
+// Removed window bindings; prefer importing mockTDLearning directly

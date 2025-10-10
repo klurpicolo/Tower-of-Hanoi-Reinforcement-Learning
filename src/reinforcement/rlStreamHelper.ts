@@ -1,8 +1,10 @@
 import type { RLUpdate } from "../features/playground/PlayGround";
 import { stateKeyToNodeId } from "../features/playground/PlayGround";
+import { publishRLUpdate, resetSignalAtom, rlStore } from "../state/rlAtoms";
 
 /**
  * Helper class for RL algorithms to easily stream updates to LearnFlow component
+ * Now publishes to Jotai atoms rather than using window globals
  */
 export class RLStreamHelper {
   private static instance: RLStreamHelper | null = null;
@@ -20,7 +22,7 @@ export class RLStreamHelper {
   }
 
   /**
-   * Stream a node value update to the LearnFlow component
+   * Stream a node value update to the UI via atom event
    */
   streamUpdate(
     nodeId: string,
@@ -38,14 +40,7 @@ export class RLStreamHelper {
       action,
     };
 
-    // Use the global function exposed by LearnFlow
-    if (typeof window !== "undefined" && (window as any).addRLUpdate) {
-      (window as any).addRLUpdate(update);
-    } else {
-      console.warn(
-        "LearnFlow component not found. Make sure LearnFlow is mounted.",
-      );
-    }
+    publishRLUpdate(update);
   }
 
   /**
@@ -83,21 +78,13 @@ export class RLStreamHelper {
   }
 
   /**
-   * Reset all counters
+   * Reset all counters and signal UI reset
    */
   reset(): void {
     this.episodeCount = 0;
     this.stepCount = 0;
     this.totalReward = 0;
-  }
-
-  resetNodes(): void {
-    if (typeof window !== "undefined" && (window as any).resetAllNodes) {
-      (window as any).resetAllNodes();
-    } else {
-      console.warn("LearnFlow resetAllNodes not found.");
-    }
-    this.reset();
+    rlStore.set(resetSignalAtom, (prev) => (prev ?? 0) + 1);
   }
 }
 
