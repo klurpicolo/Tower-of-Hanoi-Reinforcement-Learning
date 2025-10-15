@@ -18,7 +18,6 @@ export type TowerStateNode = Node<
 
 export function TowerStateNode(props: NodeProps<TowerStateNode>) {
   const {
-    stateKey,
     value,
     peg1,
     peg2,

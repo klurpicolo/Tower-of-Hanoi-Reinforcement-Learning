@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ReactFlow,
   useNodesState,
@@ -54,7 +54,7 @@ const UpdateNode = () => {
           return {
             ...node,
             style: {
-              ...node.style,
+              // ...node.style,
               backgroundColor: nodeBg,
             },
           };
