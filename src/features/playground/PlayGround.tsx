@@ -1,8 +1,9 @@
-import { ReactFlow, Background, Controls, useNodesState } from "@xyflow/react";
+import { ReactFlow, Background, Controls, useNodesState, useEdgesState } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { TowerStateNode } from "./TowerStateNode";
 import { useEffect, useState, useCallback, useRef } from "react";
-import { edges, initialNodes } from "./initNode";
+import { edges as initialEdges, initialNodes } from "./initNode";
+import { Action, keyOf, type State } from "../../features/hanoi/rl";
 import { mockTDLearning } from "../../reinforcement/mockTDLearning";
 import LearningProgressChart, {
   type EpisodeData,
@@ -59,6 +60,29 @@ initialNodes.forEach((node) => {
   if (key) stateKeyToNodeId[key] = node.id;
 });
 
+// Helper function to map state-action pairs to edge IDs
+function getEdgeIdForAction(sourceNodeId: string, action: Action): string | null {
+  // Get the source state from the node
+  const sourceNode = initialNodes.find(node => node.id === sourceNodeId);
+  if (!sourceNode) return null;
+  
+  // Parse the state from stateKey (format: "d0|d1|d2")
+  const stateKey = sourceNode.data.stateKey;
+  const state: State = stateKey.split('|').map(Number) as State;
+  
+  // Apply the action to get the next state
+  const nextState = [...state];
+  nextState[action.diskNum] = action.to;
+  const nextStateKey = keyOf(nextState);
+  
+  // Find the target node ID
+  const targetNodeId = stateKeyToNodeId[nextStateKey];
+  if (!targetNodeId) return null;
+  
+  // Return the edge ID in the format "e{sourceId}-{targetId}"
+  return `e${sourceNodeId}-${targetNodeId}`;
+}
+
 type RLStat = {
   totalUpdates: number;
   currentEpisode: number;
@@ -69,6 +93,14 @@ type RLStat = {
 
 export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  
+  // Initialize edges with default styling
+  const initialEdgesWithStyle = initialEdges.map(edge => ({
+    ...edge,
+    style: { strokeWidth: 2, stroke: '#94a3b8', markerEnd: 'url(#arrowhead-normal)' }, // Default non-optimal style
+  }));
+  
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdgesWithStyle);
   const [rlStats, setRlStats] = useState<RLStat>({
     totalUpdates: 0,
     currentEpisode: 0,
@@ -96,6 +128,54 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
     highlightDuration: config?.highlightDuration ?? 500, // 500ms default
     autoReset: config?.autoReset ?? false,
   };
+
+  // Style constants for edge highlighting
+  const EDGE_STYLES = {
+    bestAction: { 
+      strokeWidth: 3, 
+      stroke: '#10b981',
+      markerEnd: 'url(#arrowhead-best)'
+    }, // bright green with arrow
+    nonOptimal: { 
+      strokeWidth: 2, 
+      stroke: '#94a3b8',
+      markerEnd: 'url(#arrowhead-normal)'
+    }, // gray with arrow
+  };
+
+  // Function to update edge highlighting based on optimal policy
+  const updateEdgeHighlighting = useCallback(() => {
+    const bestActions = mockTDLearning.getAllBestActions();
+    const bestEdgeIds = new Set<string>();
+    
+    // Find all edge IDs that represent best actions
+    initialNodes.forEach(node => {
+      const stateKey = node.data.stateKey;
+      const bestAction = bestActions.get(stateKey);
+      
+      if (bestAction) {
+        const edgeId = getEdgeIdForAction(node.id, bestAction);
+        if (edgeId) {
+          bestEdgeIds.add(edgeId);
+        }
+      }
+    });
+    
+    // Update edge styles
+    setEdges(edges => 
+      edges.map(edge => ({
+        ...edge,
+        style: bestEdgeIds.has(edge.id) 
+          ? EDGE_STYLES.bestAction 
+          : EDGE_STYLES.nonOptimal,
+      }))
+    );
+  }, []);
+
+  // Initialize edge highlighting on component mount
+  useEffect(() => {
+    updateEdgeHighlighting();
+  }, [updateEdgeHighlighting]);
 
   // --------------------------
   // Update node value and highlight
@@ -143,6 +223,11 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
         const newTotal = prev.totalUpdates + 1;
         const reward = update.reward ?? prev.lastReward;
 
+        // Update edge highlighting periodically during training (every 10 updates)
+        if (newTotal % 10 === 0) {
+          setTimeout(() => updateEdgeHighlighting(), 0);
+        }
+
         return {
           totalUpdates: newTotal,
           currentEpisode: update.episode ?? prev.currentEpisode,
@@ -174,7 +259,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
       // Call the optional callback
       onRLUpdate?.(update);
     },
-    [onRLUpdate], // Only keep onRLUpdate as dependency
+    [onRLUpdate, updateEdgeHighlighting], // Add updateEdgeHighlighting as dependency
   );
 
   // Store the function reference in ref to avoid dependency issues
@@ -225,6 +310,9 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
         epsilon: latestEpisodeEvent.event.epsilon,
       },
     ]);
+    
+    // Update edge highlighting after each episode
+    setTimeout(() => updateEdgeHighlighting(), 0);
   }, [latestEpisodeEvent]);
 
   // React to reset signal
@@ -238,6 +326,14 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
       })),
     );
     resetStats();
+    
+    // Reset edge highlighting to default styles
+    setEdges(edges => 
+      edges.map(edge => ({
+        ...edge,
+        style: EDGE_STYLES.nonOptimal,
+      }))
+    );
   }, [resetSignal]); // Remove setNodes from dependencies
 
   const resetNodeColors = useCallback(() => {
@@ -412,13 +508,42 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
           edges={edges}
           nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
           fitView
-          defaultEdgeOptions={{
-            style: { strokeWidth: 3, stroke: "#333" },
-          }}
         >
           <Background />
           <Controls />
+          {/* SVG markers for arrows */}
+          <svg>
+            <defs>
+              <marker
+                id="arrowhead-best"
+                markerWidth="10"
+                markerHeight="7"
+                refX="9"
+                refY="3.5"
+                orient="auto"
+              >
+                <polygon
+                  points="0 0, 10 3.5, 0 7"
+                  fill="#10b981"
+                />
+              </marker>
+              <marker
+                id="arrowhead-normal"
+                markerWidth="10"
+                markerHeight="7"
+                refX="9"
+                refY="3.5"
+                orient="auto"
+              >
+                <polygon
+                  points="0 0, 10 3.5, 0 7"
+                  fill="#94a3b8"
+                />
+              </marker>
+            </defs>
+          </svg>
         </ReactFlow>
       </div>
     </div>

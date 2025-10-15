@@ -421,6 +421,50 @@ export class MockTDLearning {
   }
 
   /**
+   * Get the best action for a specific state
+   */
+  getBestActionForState(state: State): Action | null {
+    const validActions = this.getValidActions(state);
+    if (validActions.length === 0) return null;
+    
+    let bestAction = validActions[0];
+    let bestQValue = this.getQValue(state, bestAction);
+    
+    for (const action of validActions) {
+      const qValue = this.getQValue(state, action);
+      if (qValue > bestQValue) {
+        bestQValue = qValue;
+        bestAction = action;
+      }
+    }
+    
+    return bestAction;
+  }
+
+  /**
+   * Get all best actions for all states
+   */
+  getAllBestActions(): Map<string, Action> {
+    const bestActions = new Map<string, Action>();
+    
+    for (let d0 = 0; d0 < 3; d0++) {
+      for (let d1 = 0; d1 < 3; d1++) {
+        for (let d2 = 0; d2 < 3; d2++) {
+          const state: State = [d0, d1, d2];
+          const stateKey = keyOf(state);
+          const bestAction = this.getBestActionForState(state);
+          
+          if (bestAction) {
+            bestActions.set(stateKey, bestAction);
+          }
+        }
+      }
+    }
+    
+    return bestActions;
+  }
+
+  /**
    * Get the optimal policy (greedy actions)
    */
   getOptimalPolicy(): Map<string, Action> {
