@@ -4,5 +4,5 @@ import react from "@vitejs/plugin-react";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: "/rl-react/", // GitHub Pages base path
+  base: "/Tower-of-Hanoi-Reinforcement-Learning/", // GitHub Pages base path
 });
