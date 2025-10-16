@@ -446,7 +446,7 @@ export const edges = [
     source: "6",
     sourceHandle: "right-a",
     target: "10",
-    targetHandle: "right-a",
+    targetHandle: "left-a",
   },
   {
     id: "e7-8",
