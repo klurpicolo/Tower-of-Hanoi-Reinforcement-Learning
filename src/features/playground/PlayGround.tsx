@@ -111,6 +111,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
   });
   const [episodeData, setEpisodeData] = useState<EpisodeData[]>([]);
   const [maxEpisodes, setMaxEpisodes] = useState<number>(100);
+  const [speedMs, setSpeedMs] = useState<number>(100); // Default speed in milliseconds
 
   // Refs for managing streaming
   const updateQueueRef = useRef<RLUpdate[]>([]);
@@ -134,7 +135,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
   const EDGE_STYLES = {
     bestAction: { 
       strokeWidth: 3, 
-      stroke: '#10b981',
+      stroke: '#C82909',
       markerEnd: 'url(#arrowhead-best)'
     }, // bright green with arrow
     nonOptimal: { 
@@ -365,8 +366,8 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
   // Start learning function that sets max episodes
   const handleStartLearning = useCallback((episodes: number = 50) => {
     setMaxEpisodes(episodes);
-    mockTDLearning.startLearning(episodes, 50);
-  }, []);
+    mockTDLearning.startLearning(episodes, speedMs);
+  }, [speedMs]);
 
   // Enhanced reset function that also resets the chart
   const handleReset = useCallback(() => {
@@ -412,6 +413,43 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
             }}
           >
             TD Learning Controls
+          </div>
+          
+          {/* Speed Control */}
+          <div style={{ marginBottom: "10px" }}>
+            <div style={{ 
+              fontSize: "12px", 
+              marginBottom: "5px",
+              fontWeight: "500"
+            }}>
+              Speed Control: {speedMs}ms
+            </div>
+            <input
+              type="range"
+              min="50"
+              max="1000"
+              step="50"
+              value={speedMs}
+              onChange={(e) => setSpeedMs(Number(e.target.value))}
+              style={{
+                width: "100%",
+                height: "6px",
+                borderRadius: "3px",
+                background: "#ddd",
+                outline: "none",
+                cursor: "pointer",
+              }}
+            />
+            <div style={{ 
+              display: "flex", 
+              justifyContent: "space-between", 
+              fontSize: "10px", 
+              color: "#666",
+              marginTop: "2px"
+            }}>
+              <span>Fast (50ms)</span>
+              <span>Slow (1000ms)</span>
+            </div>
           </div>
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
             <button
@@ -527,7 +565,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
               >
                 <polygon
                   points="0 0, 10 3.5, 0 7"
-                  fill="#10b981"
+                  fill="#C82909"
                 />
               </marker>
               <marker

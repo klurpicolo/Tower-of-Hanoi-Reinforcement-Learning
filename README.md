@@ -1,7 +1,7 @@
 - [x] Able to play tower of hanoi during training
 - [x] Show underlying calculation
   - Q-value or V-value
-- [] Can control speed
-- [] ⁠Add style on edges to indicate best action for each state
-- [] Add graph of average reward per episode.
-- [] ⁠⁠Plot the epsilon over time to show the agent transition from exploration to exploitation.
+- [x] Can control speed
+- [x] ⁠Add style on edges to indicate best action for each state
+- [x] Add graph of average reward per episode.
+- [x] ⁠⁠Plot the epsilon over time to show the agent transition from exploration to exploitation.
