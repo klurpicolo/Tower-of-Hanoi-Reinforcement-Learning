@@ -2,11 +2,8 @@ import { getRLStream } from "./rlStreamHelper";
 import { Action, keyOf, type State } from "../features/hanoi/rl";
 import { publishEpisodeEvent } from "../state/rlAtoms";
 
-/**
- * Mock Temporal Difference Learning algorithm for demonstration
- * This simulates a TD learning process and streams updates to LearnFlow
- */
-export class MockTDLearning {
+
+export class TDLearning {
   private rlStream = getRLStream();
   private qTable: Map<string, number> = new Map();
   private learningRate = 0.1;
@@ -551,9 +548,4 @@ export class MockTDLearning {
 /**
  * Global instance for easy access
  */
-export const mockTDLearning = new MockTDLearning();
-
-/**
- * Convenience functions for browser console
- */
-// Removed window bindings; prefer importing mockTDLearning directly
+export const tdLearning = new TDLearning();

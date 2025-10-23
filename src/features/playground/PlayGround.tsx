@@ -4,7 +4,7 @@ import { TowerStateNode } from "./TowerStateNode";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { edges as initialEdges, initialNodes } from "./initNode";
 import { Action, keyOf, type State } from "../../features/hanoi/rl";
-import { mockTDLearning } from "../../reinforcement/mockTDLearning";
+import { tdLearning } from "../../reinforcement/tempoalDifferentLearning";
 import LearningProgressChart, {
   type EpisodeData,
 } from "./LearningProgressChart";
@@ -96,7 +96,7 @@ type RLStat = {
   lastEpisodeReward: number;
 };
 
-// try rebuild
+
 export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   
@@ -137,7 +137,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
   // Monitor learning state changes
   useEffect(() => {
     const checkLearningState = () => {
-      if (isLearning && !mockTDLearning.getIsRunning()) {
+      if (isLearning && !tdLearning.getIsRunning()) {
         setIsLearning(false);
       }
     };
@@ -169,7 +169,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
 
   // Function to update edge highlighting based on optimal policy
   const updateEdgeHighlighting = useCallback(() => {
-    const bestActions = mockTDLearning.getAllBestActions();
+    const bestActions = tdLearning.getAllBestActions();
     const bestEdgeIds = new Set<string>();
     
     // Find all edge IDs that represent best actions
@@ -415,26 +415,25 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
       lastEpisodeReward: 0,
     });
     setEpisodeData([]);
-    setMaxEpisodes(100);
   }, []);
 
   // Start/Stop/Resume learning function
   const handleStartStopLearning = useCallback(() => {
     if (isLearning) {
       // Currently learning, so stop it
-      mockTDLearning.stopLearning();
+      tdLearning.stopLearning();
       setIsLearning(false);
     } else {
       // Not learning, so start/resume it
       setMaxEpisodes(maxEpisodes);
-      mockTDLearning.startLearning(maxEpisodes, speedMs);
+      tdLearning.startLearning(maxEpisodes, speedMs);
       setIsLearning(true);
     }
   }, [isLearning, maxEpisodes, speedMs]);
 
   // Enhanced reset function that also resets the chart
   const handleReset = useCallback(() => {
-    mockTDLearning.reset();
+    tdLearning.reset();
     resetStats();
     setIsLearning(false);
   }, [resetStats]);
