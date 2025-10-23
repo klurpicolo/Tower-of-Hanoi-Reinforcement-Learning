@@ -14,7 +14,7 @@ import {
   episodeEventAtom,
   resetSignalAtom,
 } from "../../state/rlAtoms";
-import { Table, Paper, Title } from "@mantine/core";
+import { Table, Paper } from "@mantine/core";
 
 function valueToRGB(value: number): string {
   const normalized = Math.min(Math.max(value / 5, 0), 1); // adjust max value
@@ -119,8 +119,9 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
     lastEpisodeReward: 0,
   });
   const [episodeData, setEpisodeData] = useState<EpisodeData[]>([]);
-  const [maxEpisodes, setMaxEpisodes] = useState<number>(100);
+  const [maxEpisodes, setMaxEpisodes] = useState<number>(50);
   const [speedMs, setSpeedMs] = useState<number>(100); // Default speed in milliseconds
+  const [isLearning, setIsLearning] = useState<boolean>(false);
 
   // Refs for managing streaming
   const updateQueueRef = useRef<RLUpdate[]>([]);
@@ -132,6 +133,18 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
   const latestUpdate = useAtomValue(rlUpdateEventAtom);
   const latestEpisodeEvent = useAtomValue(episodeEventAtom);
   const resetSignal = useAtomValue(resetSignalAtom);
+
+  // Monitor learning state changes
+  useEffect(() => {
+    const checkLearningState = () => {
+      if (isLearning && !mockTDLearning.getIsRunning()) {
+        setIsLearning(false);
+      }
+    };
+    
+    const interval = setInterval(checkLearningState, 1000); // Check every second
+    return () => clearInterval(interval);
+  }, [isLearning]);
 
   // Configuration with defaults
   const streamConfig: Required<RLStreamConfig> = {
@@ -405,16 +418,25 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
     setMaxEpisodes(100);
   }, []);
 
-  // Start learning function that sets max episodes
-  const handleStartLearning = useCallback((episodes: number = 50) => {
-    setMaxEpisodes(episodes);
-    mockTDLearning.startLearning(episodes, speedMs);
-  }, [speedMs]);
+  // Start/Stop/Resume learning function
+  const handleStartStopLearning = useCallback(() => {
+    if (isLearning) {
+      // Currently learning, so stop it
+      mockTDLearning.stopLearning();
+      setIsLearning(false);
+    } else {
+      // Not learning, so start/resume it
+      setMaxEpisodes(maxEpisodes);
+      mockTDLearning.startLearning(maxEpisodes, speedMs);
+      setIsLearning(true);
+    }
+  }, [isLearning, maxEpisodes, speedMs]);
 
   // Enhanced reset function that also resets the chart
   const handleReset = useCallback(() => {
     mockTDLearning.reset();
     resetStats();
+    setIsLearning(false);
   }, [resetStats]);
 
   return (
@@ -457,70 +479,97 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
             TD Learning Controls
           </div>
           
-          {/* Speed Control */}
-          <div style={{ marginBottom: "10px" }}>
-            <div style={{ 
-              fontSize: "12px", 
-              marginBottom: "5px",
-              fontWeight: "500"
-            }}>
-              Speed Control: {speedMs}ms
-            </div>
-            <input
-              type="range"
-              min="50"
-              max="1000"
-              step="50"
-              value={speedMs}
-              onChange={(e) => setSpeedMs(Number(e.target.value))}
-              style={{
-                width: "100%",
-                height: "6px",
-                borderRadius: "3px",
-                background: "#ddd",
-                outline: "none",
-                cursor: "pointer",
-              }}
-            />
-            <div style={{ 
-              display: "flex", 
-              justifyContent: "space-between", 
-              fontSize: "10px", 
-              color: "#666",
-              marginTop: "2px"
-            }}>
-              <span>Fast (50ms)</span>
-              <span>Slow (1000ms)</span>
-            </div>
-          </div>
+           {/* Speed Control */}
+           <div style={{ marginBottom: "10px" }}>
+             <div style={{ 
+               fontSize: "12px", 
+               marginBottom: "5px",
+               fontWeight: "500"
+             }}>
+               Speed Control: {speedMs}ms
+             </div>
+             <input
+               type="range"
+               min="50"
+               max="1000"
+               step="50"
+               value={speedMs}
+               onChange={(e) => setSpeedMs(Number(e.target.value))}
+               style={{
+                 width: "100%",
+                 height: "6px",
+                 borderRadius: "3px",
+                 background: "#ddd",
+                 outline: "none",
+                 cursor: "pointer",
+               }}
+             />
+             <div style={{ 
+               display: "flex", 
+               justifyContent: "space-between", 
+               fontSize: "10px", 
+               color: "#666",
+               marginTop: "2px"
+             }}>
+               <span>Fast (50ms)</span>
+               <span>Slow (1000ms)</span>
+             </div>
+           </div>
+
+           {/* Episodes Control */}
+           <div style={{ marginBottom: "10px" }}>
+             <div style={{ 
+               fontSize: "12px", 
+               marginBottom: "5px",
+               fontWeight: "500"
+             }}>
+               Episodes: {maxEpisodes}
+             </div>
+             <input
+               type="range"
+               min="10"
+               max="100"
+               step="10"
+               value={maxEpisodes}
+               onChange={(e) => setMaxEpisodes(Number(e.target.value))}
+               disabled={isLearning}
+               style={{
+                 width: "100%",
+                 height: "6px",
+                 borderRadius: "3px",
+                 background: isLearning ? "#ccc" : "#ddd",
+                 outline: "none",
+                 cursor: isLearning ? "not-allowed" : "pointer",
+                 opacity: isLearning ? 0.6 : 1,
+               }}
+             />
+             <div style={{ 
+               display: "flex", 
+               justifyContent: "space-between", 
+               fontSize: "10px", 
+               color: "#666",
+               marginTop: "2px"
+             }}>
+               <span>10</span>
+               <span>100</span>
+             </div>
+           </div>
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
             <button
-              onClick={() => handleStartLearning(50)}
+              onClick={handleStartStopLearning}
               style={{
                 padding: "8px 12px",
-                backgroundColor: "#80A1BA",
+                backgroundColor: isLearning ? "#e74c3c" : "#27ae60",
                 color: "white",
                 border: "none",
                 borderRadius: "4px",
                 cursor: "pointer",
                 fontSize: "12px",
+                flex: 1,
+                minWidth: "120px",
               }}
             >
-              Start TD Learning
-            </button>
-            <button
-              onClick={() => mockTDLearning.stopLearning()}
-              style={{
-                padding: "8px 12px",
-                backgroundColor: "#80A1BA",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                fontSize: "12px",
-              }}
-            >
-              Stop Learning
+              {isLearning ? "Stop Learning" : "Start Learning"}
             </button>
             <button
               onClick={handleReset}
@@ -532,6 +581,8 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
                 borderRadius: "4px",
                 cursor: "pointer",
                 fontSize: "12px",
+                flex: 1,
+                minWidth: "80px",
               }}
             >
               Reset

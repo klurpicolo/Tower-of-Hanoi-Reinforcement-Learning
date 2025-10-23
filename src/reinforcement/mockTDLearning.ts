@@ -180,6 +180,13 @@ export class MockTDLearning {
   }
 
   /**
+   * Check if learning is currently running
+   */
+  getIsRunning(): boolean {
+    return this.isRunning;
+  }
+
+  /**
    * Generate a reward based on node and context
    */
   private generateReward(
