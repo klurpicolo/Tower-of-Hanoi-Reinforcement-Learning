@@ -495,6 +495,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
                step="50"
                value={speedMs}
                onChange={(e) => setSpeedMs(Number(e.target.value))}
+               disabled={isLearning}
                style={{
                  width: "100%",
                  height: "6px",
@@ -515,8 +516,6 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
                <span>Slow (1000ms)</span>
              </div>
            </div>
-
-           {/* Episodes Control */}
            <div style={{ marginBottom: "10px" }}>
              <div style={{ 
                fontSize: "12px", 
@@ -554,6 +553,36 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
                <span>100</span>
              </div>
            </div>
+
+          {/* Stats Table */}
+          <Paper shadow="sm" p="ms" mt="ms">
+            <Table striped highlightOnHover>
+              
+              <Table.Tbody>
+                <Table.Tr>
+                  <Table.Td>Episode</Table.Td>
+                  <Table.Td><strong>{rlStats.currentEpisode}</strong></Table.Td>
+                </Table.Tr>
+                <Table.Tr>
+                  <Table.Td>Step</Table.Td>
+                  <Table.Td><strong>{rlStats.step}</strong></Table.Td>
+                </Table.Tr>
+                <Table.Tr>
+                  <Table.Td>Last Episode Reward</Table.Td>
+                  <Table.Td><strong>{rlStats.lastReward.toFixed(2)}</strong></Table.Td>
+                </Table.Tr>
+                <Table.Tr>
+                  <Table.Td>Current Episode Reward</Table.Td>
+                  <Table.Td><strong>{rlStats.currentEpisodeReward.toFixed(2)}</strong></Table.Td>
+                </Table.Tr>
+                <Table.Tr>
+                  <Table.Td>Average Reward</Table.Td>
+                  <Table.Td><strong>{rlStats.averageReward.toFixed(2)}</strong></Table.Td>
+                </Table.Tr>
+              </Table.Tbody>
+            </Table>
+          </Paper>
+
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
             <button
               onClick={handleStartStopLearning}
@@ -588,40 +617,6 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
               Reset
             </button>
           </div>
-
-          {/* Stats Table */}
-          <Paper shadow="sm" p="ms" mt="ms">
-            <Table striped highlightOnHover>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Metric</Table.Th>
-                  <Table.Th>Value</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                <Table.Tr>
-                  <Table.Td>Episode</Table.Td>
-                  <Table.Td><strong>{rlStats.currentEpisode}</strong></Table.Td>
-                </Table.Tr>
-                <Table.Tr>
-                  <Table.Td>Step</Table.Td>
-                  <Table.Td><strong>{rlStats.step}</strong></Table.Td>
-                </Table.Tr>
-                <Table.Tr>
-                  <Table.Td>Last Episode Reward</Table.Td>
-                  <Table.Td><strong>{rlStats.lastReward.toFixed(2)}</strong></Table.Td>
-                </Table.Tr>
-                <Table.Tr>
-                  <Table.Td>Current Episode Reward</Table.Td>
-                  <Table.Td><strong>{rlStats.currentEpisodeReward.toFixed(2)}</strong></Table.Td>
-                </Table.Tr>
-                <Table.Tr>
-                  <Table.Td>Average Reward</Table.Td>
-                  <Table.Td><strong>{rlStats.averageReward.toFixed(2)}</strong></Table.Td>
-                </Table.Tr>
-              </Table.Tbody>
-            </Table>
-          </Paper>
         </div>
 
         {/* Right Side - Chart Space */}
