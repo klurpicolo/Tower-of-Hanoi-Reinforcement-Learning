@@ -14,6 +14,7 @@ import {
   episodeEventAtom,
   resetSignalAtom,
 } from "../../state/rlAtoms";
+import { Table, Paper, Title } from "@mantine/core";
 
 function valueToRGB(value: number): string {
   const normalized = Math.min(Math.max(value / 5, 0), 1); // adjust max value
@@ -537,32 +538,39 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
             </button>
           </div>
 
-          {/* Stats in Left Panel */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "8px",
-              fontSize: "12px",
-              marginTop: "10px",
-            }}
-          >
-            <div>
-              Episode: <strong>{rlStats.currentEpisode}</strong>
-            </div>
-            <div>
-              Step: <strong>{rlStats.step}</strong>
-            </div>
-            <div>
-              Last Episode: <strong>{rlStats.lastReward.toFixed(2)}</strong>
-            </div>
-            <div>
-              Current Episode Reward: <strong>{rlStats.currentEpisodeReward.toFixed(2)}</strong>
-            </div>
-            <div>
-              Avg Reward: <strong>{rlStats.averageReward.toFixed(2)}</strong>
-            </div>
-          </div>
+          {/* Stats Table */}
+          <Paper shadow="sm" p="ms" mt="ms">
+            <Table striped highlightOnHover>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>Metric</Table.Th>
+                  <Table.Th>Value</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                <Table.Tr>
+                  <Table.Td>Episode</Table.Td>
+                  <Table.Td><strong>{rlStats.currentEpisode}</strong></Table.Td>
+                </Table.Tr>
+                <Table.Tr>
+                  <Table.Td>Step</Table.Td>
+                  <Table.Td><strong>{rlStats.step}</strong></Table.Td>
+                </Table.Tr>
+                <Table.Tr>
+                  <Table.Td>Last Episode Reward</Table.Td>
+                  <Table.Td><strong>{rlStats.lastReward.toFixed(2)}</strong></Table.Td>
+                </Table.Tr>
+                <Table.Tr>
+                  <Table.Td>Current Episode Reward</Table.Td>
+                  <Table.Td><strong>{rlStats.currentEpisodeReward.toFixed(2)}</strong></Table.Td>
+                </Table.Tr>
+                <Table.Tr>
+                  <Table.Td>Average Reward</Table.Td>
+                  <Table.Td><strong>{rlStats.averageReward.toFixed(2)}</strong></Table.Td>
+                </Table.Tr>
+              </Table.Tbody>
+            </Table>
+          </Paper>
         </div>
 
         {/* Right Side - Chart Space */}
