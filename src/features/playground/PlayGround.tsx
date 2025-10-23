@@ -89,6 +89,10 @@ type RLStat = {
   lastReward: number;
   averageReward: number;
   step: number;
+  totalEpisodes: number;
+  totalEpisodeReward: number;
+  currentEpisodeReward: number;
+  lastEpisodeReward: number;
 };
 
 // try rebuild
@@ -108,6 +112,10 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
     lastReward: 0,
     averageReward: 0,
     step: 0,
+    totalEpisodes: 0,
+    totalEpisodeReward: 0,
+    currentEpisodeReward: 0,
+    lastEpisodeReward: 0,
   });
   const [episodeData, setEpisodeData] = useState<EpisodeData[]>([]);
   const [maxEpisodes, setMaxEpisodes] = useState<number>(100);
@@ -224,6 +232,15 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
       setRlStats((prev) => {
         const newTotal = prev.totalUpdates + 1;
         const reward = update.reward ?? prev.lastReward;
+        const currentEpisode = update.episode ?? prev.currentEpisode;
+        
+        // Check if we're starting a new episode
+        const isNewEpisode = currentEpisode !== prev.currentEpisode;
+        
+        // Update current episode cumulative reward
+        const newCurrentEpisodeReward = isNewEpisode 
+          ? reward  // Start with current reward for new episode
+          : prev.currentEpisodeReward + reward;  // Add to existing cumulative reward
 
         // Update edge highlighting periodically during training (every 10 updates)
         if (newTotal % 10 === 0) {
@@ -232,13 +249,14 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
 
         return {
           totalUpdates: newTotal,
-          currentEpisode: update.episode ?? prev.currentEpisode,
-          lastReward: reward,
+          currentEpisode: currentEpisode,
+          lastReward: prev.lastEpisodeReward, // Keep last episode reward
           step: update.step ?? prev.step,
-          averageReward:
-            newTotal > 1
-              ? (prev.averageReward * (newTotal - 1) + reward) / newTotal
-              : reward,
+          averageReward: prev.averageReward, // Keep existing average reward (updated per episode)
+          totalEpisodes: prev.totalEpisodes,
+          totalEpisodeReward: prev.totalEpisodeReward,
+          currentEpisodeReward: newCurrentEpisodeReward,
+          lastEpisodeReward: prev.lastEpisodeReward,
         };
       });
 
@@ -301,17 +319,36 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
     }
   }, [latestUpdate]); // Remove processUpdateQueue from dependencies
 
-  // When a new episode event arrives, append to chart
+  // When a new episode event arrives, append to chart and update average reward
   useEffect(() => {
     if (!latestEpisodeEvent) return;
+    const episodeReward = latestEpisodeEvent.event.reward;
+    
     setEpisodeData((prev) => [
       ...prev,
       {
         episode: latestEpisodeEvent.event.episode,
-        reward: latestEpisodeEvent.event.reward,
+        reward: episodeReward,
         epsilon: latestEpisodeEvent.event.epsilon,
       },
     ]);
+    
+    // Update average reward per episode and set last episode reward
+    setRlStats((prev) => {
+      const newTotalEpisodes = prev.totalEpisodes + 1;
+      const newTotalEpisodeReward = prev.totalEpisodeReward + episodeReward;
+      const newAverageReward = newTotalEpisodeReward / newTotalEpisodes;
+      
+      return {
+        ...prev,
+        totalEpisodes: newTotalEpisodes,
+        totalEpisodeReward: newTotalEpisodeReward,
+        averageReward: newAverageReward,
+        lastEpisodeReward: episodeReward, // Set the completed episode's reward
+        lastReward: episodeReward, // Update last reward to show last episode reward
+        currentEpisode: latestEpisodeEvent.event.episode, // Update current episode to the completed episode
+      };
+    });
     
     // Update edge highlighting after each episode
     setTimeout(() => updateEdgeHighlighting(), 0);
@@ -358,6 +395,10 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
       lastReward: 0,
       averageReward: 0,
       step: 0,
+      totalEpisodes: 0,
+      totalEpisodeReward: 0,
+      currentEpisodeReward: 0,
+      lastEpisodeReward: 0,
     });
     setEpisodeData([]);
     setMaxEpisodes(100);
@@ -513,7 +554,10 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
               Step: <strong>{rlStats.step}</strong>
             </div>
             <div>
-              Last Reward: <strong>{rlStats.lastReward.toFixed(2)}</strong>
+              Last Episode: <strong>{rlStats.lastReward.toFixed(2)}</strong>
+            </div>
+            <div>
+              Current Episode Reward: <strong>{rlStats.currentEpisodeReward.toFixed(2)}</strong>
             </div>
             <div>
               Avg Reward: <strong>{rlStats.averageReward.toFixed(2)}</strong>

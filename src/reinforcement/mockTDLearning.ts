@@ -150,7 +150,7 @@ export class MockTDLearning {
 
       // Send episode data to chart via atom event
       publishEpisodeEvent({
-        episode,
+        episode: episode + 1, // Convert to 1-indexed for chart display
         reward: episodeReward,
         epsilon: this.epsilon,
       });
