@@ -107,13 +107,6 @@ export class TDLearning {
         // Check if solved
         if (this.isGoalState(nextState)) {
           solved = true;
-          this.rlStream.streamUpdate(
-            keyOf(nextState),
-            this.getQValueForUI(nextState),
-            reward,
-            this.getActionKey(action),
-          );
-          this.rlStream.incrementStep();
           break;
         }
 

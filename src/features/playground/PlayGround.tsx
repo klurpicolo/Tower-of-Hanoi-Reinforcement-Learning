@@ -475,7 +475,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
               marginBottom: "5px",
             }}
           >
-            TD Learning Controls
+            TD Learning (Q-learning) Controls
           </div>
           
            {/* Speed Control */}
