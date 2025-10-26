@@ -90,7 +90,7 @@ export class TDLearning {
         const stateKey = keyOf(state);
         this.rlStream.streamUpdate(
           stateKey,
-          this.getQValueForUI(state),
+          this.getQValue(state, action), // Show Q-value of the action that was just taken
           reward,
           this.getActionKey(action),
         );
@@ -347,6 +347,8 @@ export class TDLearning {
     const stateKey = keyOf(state);
     const actionKey = this.getActionKey(action);
     const qKey = `${stateKey}_${actionKey}`;
+
+    console.log(`qKey ${qKey} value ${value}`)
     this.qTable.set(qKey, value);
   }
 
@@ -413,6 +415,8 @@ export class TDLearning {
     // Q-learning update: Q(s,a) = Q(s,a) + α[r + γ*max(Q(s',a')) - Q(s,a)]
     const target = reward + this.discountFactor * maxNextQ;
     const newQ = currentQ + this.learningRate * (target - currentQ);
+
+    console.log(`state ${state} action ${action} currnetQ ${currentQ} newQ ${newQ} reward ${reward}`)
 
     this.setQValue(state, action, newQ);
   }
@@ -524,8 +528,6 @@ export class TDLearning {
       solution.push(action);
       state = this.applyAction(state, action);
       stateChanges.push(keyOf(state));
-      // console.log(stateKey,":", action)
-      // this.rlStream.streamUpdate(stateKey, this.getQValueForUI(state), 0, this.getActionKey(action));
       steps++;
     }
 
