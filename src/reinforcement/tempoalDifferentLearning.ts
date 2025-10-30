@@ -318,21 +318,6 @@ export class TDLearning {
     return this.qTable.get(qKey)!;
   }
 
-  private getQValueForUI(state: State): number {
-    const validActions = this.getValidActions(state);
-    let bestAction = validActions[0];
-    let bestQValue = this.getQValue(state, bestAction);
-    for (const action of validActions) {
-      const qValue = this.getQValue(state, action);
-      // console.log(`    action: ${action} qValue: ${qValue}`)
-      if (qValue > bestQValue) {
-        bestQValue = qValue;
-        bestAction = action;
-      }
-    }
-    return bestQValue;
-  }
-
   /**
    * Set Q-value for a state-action pair
    */

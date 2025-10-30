@@ -796,7 +796,8 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
               width: "80%",
               maxWidth: 900,
               maxHeight: "80vh",
-              overflowY: "auto",
+              display: "flex",
+              flexDirection: "column",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -804,6 +805,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
               <h3 style={{ margin: 0 }}>State Calculation History</h3>
               <button onClick={() => setIsModalOpen(false)} style={{ border: "none", background: "#eee", borderRadius: 4, padding: "6px 10px", cursor: "pointer" }}>Close</button>
             </div>
+            <div style={{ flex: 1, overflowY: "auto" }}>
             {(() => {
               const node = nodes.find(n => n.id === selectedNodeId);
               const history: any[] = (node?.data as any)?.history || [];
@@ -813,31 +815,38 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
               const hovered = hoveredHistoryIndex != null ? history[hoveredHistoryIndex] : null;
               return (
                 <>
-                  {hovered && hovered.currentQ != null && (
-                    <div
-                      style={{
-                        marginBottom: 10,
-                        background: "#f8fafc",
-                        border: "1px solid #e2e8f0",
-                        borderRadius: 6,
-                        padding: "8px 10px",
-                        fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-                        fontSize: 12,
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      <div style={{ fontWeight: 700, marginBottom: 4 }}>Calculation</div>
-                      <div>
-                        Q(s,a) ← Q(s,a) + α [ r + γ · max<sub>a'</sub> Q(s', a') − Q(s,a) ]
-                      </div>
-                      <div style={{ marginTop: 6 }}>
-                        = {Number(hovered.currentQ).toFixed(2)} + {Number(hovered.alpha).toFixed(2)} [ {Number(hovered.reward).toFixed(2)} + {Number(hovered.gamma).toFixed(2)} · {Number(hovered.maxNextQ).toFixed(2)} − {Number(hovered.currentQ).toFixed(2)} ]
-                      </div>
-                      <div style={{ marginTop: 4 }}>
-                        = <strong>{Number(hovered.newQ).toFixed(2)}</strong>
-                      </div>
-                    </div>
-                  )}
+                  <div
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 2,
+                      marginBottom: 10,
+                      background: hovered ? "#f8fafc" : "#fff",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: 6,
+                      padding: "8px 10px",
+                      fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                      fontSize: 12,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    <div style={{ fontWeight: 700, marginBottom: 4 }}>Calculation</div>
+                    {hovered ? (
+                      <>
+                        <div>
+                          Q(s,a) ← Q(s,a) + α [ r + γ · max<sub>a'</sub> Q(s', a') − Q(s,a) ]
+                        </div>
+                        <div style={{ marginTop: 6 }}>
+                          = {Number(hovered.currentQ).toFixed(2)} + {Number(hovered.alpha).toFixed(2)} [ {Number(hovered.reward).toFixed(2)} + {Number(hovered.gamma).toFixed(2)} · {Number(hovered.maxNextQ).toFixed(2)} − {Number(hovered.currentQ).toFixed(2)} ]
+                        </div>
+                        <div style={{ marginTop: 4 }}>
+                          = <strong>{Number(hovered.newQ).toFixed(2)}</strong>
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{ color: "#64748b" }}>Hover a row to see its calculation.</div>
+                    )}
+                  </div>
                   <Table striped highlightOnHover>
                   <Table.Thead>
                     <Table.Tr>
@@ -878,6 +887,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
                 </>
               );
             })()}
+            </div>
           </div>
         </div>
       )}
