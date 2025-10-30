@@ -12,6 +12,7 @@ export type TowerStateNode = Node<
     peg3: number[];
     background?: string;
     currentState: boolean;
+    history?: any[];
   },
   "towerOfHanoi"
 >;

@@ -29,6 +29,16 @@ export class RLStreamHelper {
     value: number,
     reward?: number,
     action?: string,
+    extra?: {
+      stateKey?: string;
+      nextStateKey?: string;
+      currentQ?: number;
+      maxNextQ?: number;
+      target?: number;
+      newQ?: number;
+      alpha?: number;
+      gamma?: number;
+    },
   ): void {
     const update: RLUpdate = {
       nodeId: stateKeyToNodeId[nodeId],
@@ -38,6 +48,14 @@ export class RLStreamHelper {
       step: this.stepCount,
       reward,
       action,
+      stateKey: extra?.stateKey,
+      nextStateKey: extra?.nextStateKey,
+      currentQ: extra?.currentQ,
+      maxNextQ: extra?.maxNextQ,
+      target: extra?.target,
+      newQ: extra?.newQ,
+      alpha: extra?.alpha,
+      gamma: extra?.gamma,
     };
 
     publishRLUpdate(update);

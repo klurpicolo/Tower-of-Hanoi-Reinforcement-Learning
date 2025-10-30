@@ -37,6 +37,15 @@ export interface RLUpdate {
   step?: number;
   reward?: number;
   action?: string;
+  // TD calculation details
+  stateKey?: string;
+  nextStateKey?: string;
+  currentQ?: number;
+  maxNextQ?: number;
+  target?: number;
+  newQ?: number;
+  alpha?: number;
+  gamma?: number;
 }
 
 export interface RLStreamConfig {
@@ -122,6 +131,8 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
   const [maxEpisodes, setMaxEpisodes] = useState<number>(50);
   const [speedMs, setSpeedMs] = useState<number>(100); // Default speed in milliseconds
   const [isLearning, setIsLearning] = useState<boolean>(false);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   // Refs for managing streaming
   const updateQueueRef = useRef<RLUpdate[]>([]);
@@ -240,8 +251,49 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
   // Process a single RL update
   const processRLUpdate = useCallback(
     (update: RLUpdate) => {
-      // Update the node
-      updateNode(update.nodeId, update.value, true);
+      // Update the node value and append history entry
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (node.id === update.nodeId) {
+            const bgColor = valueToRGB(update.value);
+            const prevHistory = (node.data as any).history || [];
+            const historyEntry = {
+              timestamp: update.timestamp,
+              episode: update.episode,
+              step: update.step,
+              reward: update.reward,
+              action: update.action,
+              value: update.value,
+              stateKey: update.stateKey,
+              nextStateKey: update.nextStateKey,
+              currentQ: update.currentQ,
+              maxNextQ: update.maxNextQ,
+              target: update.target,
+              newQ: update.newQ,
+              alpha: update.alpha,
+              gamma: update.gamma,
+            };
+
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                value: update.value,
+                background: bgColor,
+                currentState: true,
+                history: [...prevHistory, historyEntry],
+              },
+            };
+          }
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              currentState: false,
+            },
+          };
+        }),
+      );
 
       setRlStats((prev) => {
         const newTotal = prev.totalUpdates + 1;
@@ -375,7 +427,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
     setNodes((prev) =>
       prev.map((node) => ({
         ...node,
-        data: { ...node.data, value: 0, currentState: false },
+        data: { ...node.data, value: 0, currentState: false, history: [] },
       })),
     );
     resetStats();
@@ -649,6 +701,10 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
           nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+          onNodeClick={(_, node) => {
+            setSelectedNodeId(node.id);
+            setIsModalOpen(true);
+          }}
           fitView
         >
           <Background />
@@ -686,6 +742,85 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
           </svg>
         </ReactFlow>
       </div>
+
+      {isModalOpen && selectedNodeId && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.4)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+          onClick={() => setIsModalOpen(false)}
+        >
+          <div
+            style={{
+              background: "#fff",
+              padding: 16,
+              borderRadius: 8,
+              width: "80%",
+              maxWidth: 900,
+              maxHeight: "80vh",
+              overflowY: "auto",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <h3 style={{ margin: 0 }}>State Calculation History</h3>
+              <button onClick={() => setIsModalOpen(false)} style={{ border: "none", background: "#eee", borderRadius: 4, padding: "6px 10px", cursor: "pointer" }}>Close</button>
+            </div>
+            {(() => {
+              const node = nodes.find(n => n.id === selectedNodeId);
+              const history: any[] = (node?.data as any)?.history || [];
+              if (history.length === 0) {
+                return <div>No history yet for this node.</div>;
+              }
+              return (
+                <Table striped highlightOnHover>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>Time</Table.Th>
+                      <Table.Th>Episode</Table.Th>
+                      <Table.Th>Step</Table.Th>
+                      <Table.Th>Reward</Table.Th>
+                      <Table.Th>Action</Table.Th>
+                      <Table.Th>Q(s,a)</Table.Th>
+                      <Table.Th>max Q(s',a')</Table.Th>
+                      <Table.Th>Target</Table.Th>
+                      <Table.Th>New Q</Table.Th>
+                      <Table.Th>α</Table.Th>
+                      <Table.Th>γ</Table.Th>
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {history.map((h, idx) => (
+                      <Table.Tr key={idx}>
+                        <Table.Td>{new Date(h.timestamp).toLocaleTimeString()}</Table.Td>
+                        <Table.Td>{h.episode}</Table.Td>
+                        <Table.Td>{h.step}</Table.Td>
+                        <Table.Td>{h.reward?.toFixed?.(2) ?? h.reward}</Table.Td>
+                        <Table.Td>{h.action}</Table.Td>
+                        <Table.Td>{h.currentQ?.toFixed?.(2)}</Table.Td>
+                        <Table.Td>{h.maxNextQ?.toFixed?.(2)}</Table.Td>
+                        <Table.Td>{h.target?.toFixed?.(2)}</Table.Td>
+                        <Table.Td>{h.newQ?.toFixed?.(2)}</Table.Td>
+                        <Table.Td>{h.alpha}</Table.Td>
+                        <Table.Td>{h.gamma}</Table.Td>
+                      </Table.Tr>
+                    ))}
+                  </Table.Tbody>
+                </Table>
+              );
+            })()}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

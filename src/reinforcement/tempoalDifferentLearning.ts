@@ -86,14 +86,7 @@ export class TDLearning {
         // Update Q-value
         this.updateQValue(state, action, reward, nextState);
 
-        // Stream update to LearnFlow
-        const stateKey = keyOf(state);
-        this.rlStream.streamUpdate(
-          stateKey,
-          this.getQValue(state, action), // Show Q-value of the action that was just taken
-          reward,
-          this.getActionKey(action),
-        );
+        // Increment step; detailed streaming occurs in updateQValue
         this.rlStream.incrementStep();
 
         episodeReward += reward;
@@ -419,6 +412,26 @@ export class TDLearning {
     console.log(`state ${state} action ${action} currnetQ ${currentQ} newQ ${newQ} reward ${reward}`)
 
     this.setQValue(state, action, newQ);
+
+    // Stream detailed update to UI for history tracking
+    const stateKey = keyOf(state);
+    const nextStateKey = keyOf(nextState);
+    this.rlStream.streamUpdate(
+      stateKey,
+      newQ,
+      reward,
+      this.getActionKey(action),
+      {
+        stateKey,
+        nextStateKey,
+        currentQ,
+        maxNextQ,
+        target,
+        newQ,
+        alpha: this.learningRate,
+        gamma: this.discountFactor,
+      },
+    );
   }
 
   /**
