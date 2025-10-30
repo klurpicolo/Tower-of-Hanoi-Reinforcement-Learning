@@ -694,7 +694,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
       </div>
 
       {/* ReactFlow canvas below */}
-      <div style={{ flexGrow: 1 }}>
+      <div style={{ flexGrow: 1, position: "relative" }}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -741,6 +741,34 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
             </defs>
           </svg>
         </ReactFlow>
+
+        {/* Floating Q-learning formula box */}
+        <div
+          style={{
+            position: "absolute",
+            right: 12,
+            bottom: 12,
+            background: "rgba(255,255,255,0.95)",
+            border: "1px solid #ddd",
+            borderRadius: 8,
+            padding: "10px 12px",
+            boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
+            fontSize: 12,
+            maxWidth: 360,
+            lineHeight: 1.4,
+            zIndex: 5,
+          }}
+        >
+          <div style={{ fontWeight: 700, marginBottom: 6 }}>Q-learning Update</div>
+          <div style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>
+            Q(s,a) ← Q(s,a) + α [ r + γ · max<sub>a'</sub> Q(s', a') − Q(s,a) ]
+          </div>
+          <div style={{ marginTop: 6, color: "#555" }}>
+            <span><strong>α</strong>: learning rate,&nbsp;</span>
+            <span><strong>γ</strong>: discount,&nbsp;</span>
+            <span><strong>r</strong>: reward</span>
+          </div>
+        </div>
       </div>
 
       {isModalOpen && selectedNodeId && (
