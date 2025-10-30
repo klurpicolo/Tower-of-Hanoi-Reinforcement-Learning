@@ -454,7 +454,9 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
           background: "#f9f9f9",
           borderBottom: "1px solid #ddd",
           zIndex: 10,
-          minHeight: "200px",
+          height: "40vh",
+          maxHeight: "40vh",
+          overflow: "hidden",
         }}
       >
         {/* Left Side - Controls */}
@@ -466,6 +468,8 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
             flexDirection: "column",
             gap: "10px",
             borderRight: "1px solid #ddd",
+            height: "100%",
+            overflowY: "auto",
           }}
         >
           <div
