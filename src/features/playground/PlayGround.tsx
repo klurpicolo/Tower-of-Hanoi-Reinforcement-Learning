@@ -133,6 +133,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
   const [isLearning, setIsLearning] = useState<boolean>(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [hoveredHistoryIndex, setHoveredHistoryIndex] = useState<number | null>(null);
 
   // Refs for managing streaming
   const updateQueueRef = useRef<RLUpdate[]>([]);
@@ -809,8 +810,35 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
               if (history.length === 0) {
                 return <div>No history yet for this node.</div>;
               }
+              const hovered = hoveredHistoryIndex != null ? history[hoveredHistoryIndex] : null;
               return (
-                <Table striped highlightOnHover>
+                <>
+                  {hovered && hovered.currentQ != null && (
+                    <div
+                      style={{
+                        marginBottom: 10,
+                        background: "#f8fafc",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: 6,
+                        padding: "8px 10px",
+                        fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                        fontSize: 12,
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      <div style={{ fontWeight: 700, marginBottom: 4 }}>Calculation</div>
+                      <div>
+                        Q(s,a) ← Q(s,a) + α [ r + γ · max<sub>a'</sub> Q(s', a') − Q(s,a) ]
+                      </div>
+                      <div style={{ marginTop: 6 }}>
+                        = {Number(hovered.currentQ).toFixed(2)} + {Number(hovered.alpha).toFixed(2)} [ {Number(hovered.reward).toFixed(2)} + {Number(hovered.gamma).toFixed(2)} · {Number(hovered.maxNextQ).toFixed(2)} − {Number(hovered.currentQ).toFixed(2)} ]
+                      </div>
+                      <div style={{ marginTop: 4 }}>
+                        = <strong>{Number(hovered.newQ).toFixed(2)}</strong>
+                      </div>
+                    </div>
+                  )}
+                  <Table striped highlightOnHover>
                   <Table.Thead>
                     <Table.Tr>
                       <Table.Th>Time</Table.Th>
@@ -828,7 +856,10 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
                   </Table.Thead>
                   <Table.Tbody>
                     {history.map((h, idx) => (
-                      <Table.Tr key={idx}>
+                      <Table.Tr
+                        key={idx}
+                        onMouseEnter={() => setHoveredHistoryIndex(idx)}
+                      >
                         <Table.Td>{new Date(h.timestamp).toLocaleTimeString()}</Table.Td>
                         <Table.Td>{h.episode}</Table.Td>
                         <Table.Td>{h.step}</Table.Td>
@@ -843,7 +874,8 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
                       </Table.Tr>
                     ))}
                   </Table.Tbody>
-                </Table>
+                  </Table>
+                </>
               );
             })()}
           </div>
