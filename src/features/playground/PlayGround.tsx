@@ -1,4 +1,10 @@
-import { ReactFlow, Background, Controls, useNodesState, useEdgesState } from "@xyflow/react";
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  useNodesState,
+  useEdgesState,
+} from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { TowerStateNode } from "./TowerStateNode";
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -71,24 +77,27 @@ initialNodes.forEach((node) => {
 });
 
 // Helper function to map state-action pairs to edge IDs
-function getEdgeIdForAction(sourceNodeId: string, action: Action): string | null {
+function getEdgeIdForAction(
+  sourceNodeId: string,
+  action: Action,
+): string | null {
   // Get the source state from the node
-  const sourceNode = initialNodes.find(node => node.id === sourceNodeId);
+  const sourceNode = initialNodes.find((node) => node.id === sourceNodeId);
   if (!sourceNode) return null;
-  
+
   // Parse the state from stateKey (format: "d0|d1|d2")
   const stateKey = sourceNode.data.stateKey;
-  const state: State = stateKey.split('|').map(Number) as State;
-  
+  const state: State = stateKey.split("|").map(Number) as State;
+
   // Apply the action to get the next state
   const nextState = [...state];
   nextState[action.diskNum] = action.to;
   const nextStateKey = keyOf(nextState);
-  
+
   // Find the target node ID
   const targetNodeId = stateKeyToNodeId[nextStateKey];
   if (!targetNodeId) return null;
-  
+
   // Return the edge ID in the format "e{sourceId}-{targetId}"
   return `e${sourceNodeId}-${targetNodeId}`;
 }
@@ -105,16 +114,19 @@ type RLStat = {
   lastEpisodeReward: number;
 };
 
-
 export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  
+
   // Initialize edges with default styling
-  const initialEdgesWithStyle = initialEdges.map(edge => ({
+  const initialEdgesWithStyle = initialEdges.map((edge) => ({
     ...edge,
-    style: { strokeWidth: 2, stroke: '#94a3b8', markerEnd: 'url(#arrowhead-normal)' }, // Default non-optimal style
+    style: {
+      strokeWidth: 2,
+      stroke: "#94a3b8",
+      markerEnd: "url(#arrowhead-normal)",
+    }, // Default non-optimal style
   }));
-  
+
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdgesWithStyle);
   const [rlStats, setRlStats] = useState<RLStat>({
     totalUpdates: 0,
@@ -133,7 +145,9 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
   const [isLearning, setIsLearning] = useState<boolean>(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [hoveredHistoryIndex, setHoveredHistoryIndex] = useState<number | null>(null);
+  const [hoveredHistoryIndex, setHoveredHistoryIndex] = useState<number | null>(
+    null,
+  );
 
   // Refs for managing streaming
   const updateQueueRef = useRef<RLUpdate[]>([]);
@@ -153,7 +167,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
         setIsLearning(false);
       }
     };
-    
+
     const interval = setInterval(checkLearningState, 1000); // Check every second
     return () => clearInterval(interval);
   }, [isLearning]);
@@ -167,15 +181,15 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
 
   // Style constants for edge highlighting
   const EDGE_STYLES = {
-    bestAction: { 
-      strokeWidth: 3, 
-      stroke: '#C82909',
-      markerEnd: 'url(#arrowhead-best)'
+    bestAction: {
+      strokeWidth: 3,
+      stroke: "#C82909",
+      markerEnd: "url(#arrowhead-best)",
     }, // bright green with arrow
-    nonOptimal: { 
-      strokeWidth: 2, 
-      stroke: '#94a3b8',
-      markerEnd: 'url(#arrowhead-normal)'
+    nonOptimal: {
+      strokeWidth: 2,
+      stroke: "#94a3b8",
+      markerEnd: "url(#arrowhead-normal)",
     }, // gray with arrow
   };
 
@@ -183,12 +197,12 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
   const updateEdgeHighlighting = useCallback(() => {
     const bestActions = tdLearning.getAllBestActions();
     const bestEdgeIds = new Set<string>();
-    
+
     // Find all edge IDs that represent best actions
-    initialNodes.forEach(node => {
+    initialNodes.forEach((node) => {
       const stateKey = node.data.stateKey;
       const bestAction = bestActions.get(stateKey);
-      
+
       if (bestAction) {
         const edgeId = getEdgeIdForAction(node.id, bestAction);
         if (edgeId) {
@@ -196,15 +210,15 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
         }
       }
     });
-    
+
     // Update edge styles
-    setEdges(edges => 
-      edges.map(edge => ({
+    setEdges((edges) =>
+      edges.map((edge) => ({
         ...edge,
-        style: bestEdgeIds.has(edge.id) 
-          ? EDGE_STYLES.bestAction 
+        style: bestEdgeIds.has(edge.id)
+          ? EDGE_STYLES.bestAction
           : EDGE_STYLES.nonOptimal,
-      }))
+      })),
     );
   }, []);
 
@@ -300,14 +314,14 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
         const newTotal = prev.totalUpdates + 1;
         const reward = update.reward ?? prev.lastReward;
         const currentEpisode = update.episode ?? prev.currentEpisode;
-        
+
         // Check if we're starting a new episode
         const isNewEpisode = currentEpisode !== prev.currentEpisode;
-        
+
         // Update current episode cumulative reward
-        const newCurrentEpisodeReward = isNewEpisode 
-          ? reward  // Start with current reward for new episode
-          : prev.currentEpisodeReward + reward;  // Add to existing cumulative reward
+        const newCurrentEpisodeReward = isNewEpisode
+          ? reward // Start with current reward for new episode
+          : prev.currentEpisodeReward + reward; // Add to existing cumulative reward
 
         // Update edge highlighting periodically during training (every 10 updates)
         if (newTotal % 10 === 0) {
@@ -390,7 +404,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
   useEffect(() => {
     if (!latestEpisodeEvent) return;
     const episodeReward = latestEpisodeEvent.event.reward;
-    
+
     setEpisodeData((prev) => [
       ...prev,
       {
@@ -399,13 +413,13 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
         epsilon: latestEpisodeEvent.event.epsilon,
       },
     ]);
-    
+
     // Update average reward per episode and set last episode reward
     setRlStats((prev) => {
       const newTotalEpisodes = prev.totalEpisodes + 1;
       const newTotalEpisodeReward = prev.totalEpisodeReward + episodeReward;
       const newAverageReward = newTotalEpisodeReward / newTotalEpisodes;
-      
+
       return {
         ...prev,
         totalEpisodes: newTotalEpisodes,
@@ -416,7 +430,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
         currentEpisode: latestEpisodeEvent.event.episode, // Update current episode to the completed episode
       };
     });
-    
+
     // Update edge highlighting after each episode
     setTimeout(() => updateEdgeHighlighting(), 0);
   }, [latestEpisodeEvent]);
@@ -432,13 +446,13 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
       })),
     );
     resetStats();
-    
+
     // Reset edge highlighting to default styles
-    setEdges(edges => 
-      edges.map(edge => ({
+    setEdges((edges) =>
+      edges.map((edge) => ({
         ...edge,
         style: EDGE_STYLES.nonOptimal,
-      }))
+      })),
     );
   }, [resetSignal]); // Remove setNodes from dependencies
 
@@ -521,7 +535,8 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
             flexDirection: "column",
             gap: "10px",
             borderRight: "1px solid #ddd",
-            height: "100%",
+            // height: "100%",
+            width: "100%",
             overflowY: "auto",
           }}
         >
@@ -530,110 +545,128 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
               fontWeight: "bold",
               fontSize: "16px",
               marginBottom: "5px",
+              // overflow: "scroll",
             }}
           >
             TD Learning (Q-learning) Controls
           </div>
-          
-           {/* Speed Control */}
-           <div style={{ marginBottom: "10px" }}>
-             <div style={{ 
-               fontSize: "12px", 
-               marginBottom: "5px",
-               fontWeight: "500"
-             }}>
-               Speed Control: {speedMs}ms
-             </div>
-             <input
-               type="range"
-               min="50"
-               max="1000"
-               step="50"
-               value={speedMs}
-               onChange={(e) => setSpeedMs(Number(e.target.value))}
-               disabled={isLearning}
-               style={{
-                 width: "100%",
-                 height: "6px",
-                 borderRadius: "3px",
-                 background: "#ddd",
-                 outline: "none",
-                 cursor: "pointer",
-               }}
-             />
-             <div style={{ 
-               display: "flex", 
-               justifyContent: "space-between", 
-               fontSize: "10px", 
-               color: "#666",
-               marginTop: "2px"
-             }}>
-               <span>Fast (50ms)</span>
-               <span>Slow (1000ms)</span>
-             </div>
-           </div>
-           <div style={{ marginBottom: "10px" }}>
-             <div style={{ 
-               fontSize: "12px", 
-               marginBottom: "5px",
-               fontWeight: "500"
-             }}>
-               Episodes: {maxEpisodes}
-             </div>
-             <input
-               type="range"
-               min="10"
-               max="100"
-               step="10"
-               value={maxEpisodes}
-               onChange={(e) => setMaxEpisodes(Number(e.target.value))}
-               disabled={isLearning}
-               style={{
-                 width: "100%",
-                 height: "6px",
-                 borderRadius: "3px",
-                 background: isLearning ? "#ccc" : "#ddd",
-                 outline: "none",
-                 cursor: isLearning ? "not-allowed" : "pointer",
-                 opacity: isLearning ? 0.6 : 1,
-               }}
-             />
-             <div style={{ 
-               display: "flex", 
-               justifyContent: "space-between", 
-               fontSize: "10px", 
-               color: "#666",
-               marginTop: "2px"
-             }}>
-               <span>10</span>
-               <span>100</span>
-             </div>
-           </div>
+
+          {/* Speed Control */}
+          <div style={{ marginBottom: "10px" }}>
+            <div
+              style={{
+                fontSize: "12px",
+                marginBottom: "5px",
+                fontWeight: "500",
+              }}
+            >
+              Speed Control: {speedMs}ms
+            </div>
+            <input
+              type="range"
+              min="50"
+              max="1000"
+              step="50"
+              value={speedMs}
+              onChange={(e) => setSpeedMs(Number(e.target.value))}
+              disabled={isLearning}
+              style={{
+                width: "100%",
+                height: "6px",
+                borderRadius: "3px",
+                background: "#ddd",
+                outline: "none",
+                cursor: "pointer",
+              }}
+            />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: "10px",
+                color: "#666",
+                marginTop: "2px",
+              }}
+            >
+              <span>Fast (50ms)</span>
+              <span>Slow (1000ms)</span>
+            </div>
+          </div>
+          <div style={{ marginBottom: "10px" }}>
+            <div
+              style={{
+                fontSize: "12px",
+                marginBottom: "5px",
+                fontWeight: "500",
+              }}
+            >
+              Episodes: {maxEpisodes}
+            </div>
+            <input
+              type="range"
+              min="10"
+              max="100"
+              step="10"
+              value={maxEpisodes}
+              onChange={(e) => setMaxEpisodes(Number(e.target.value))}
+              disabled={isLearning}
+              style={{
+                width: "100%",
+                height: "6px",
+                borderRadius: "3px",
+                background: isLearning ? "#ccc" : "#ddd",
+                outline: "none",
+                cursor: isLearning ? "not-allowed" : "pointer",
+                opacity: isLearning ? 0.6 : 1,
+              }}
+            />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: "10px",
+                color: "#666",
+                marginTop: "2px",
+              }}
+            >
+              <span>10</span>
+              <span>100</span>
+            </div>
+          </div>
 
           {/* Stats Table */}
           <Paper shadow="sm" p="ms" mt="ms">
             <Table striped highlightOnHover>
-              
               <Table.Tbody>
                 <Table.Tr>
                   <Table.Td>Episode</Table.Td>
-                  <Table.Td><strong>{rlStats.currentEpisode}</strong></Table.Td>
+                  <Table.Td>
+                    <strong>{rlStats.currentEpisode}</strong>
+                  </Table.Td>
                 </Table.Tr>
                 <Table.Tr>
                   <Table.Td>Step</Table.Td>
-                  <Table.Td><strong>{rlStats.step}</strong></Table.Td>
+                  <Table.Td>
+                    <strong>{rlStats.step}</strong>
+                  </Table.Td>
                 </Table.Tr>
                 <Table.Tr>
                   <Table.Td>Last Episode Reward</Table.Td>
-                  <Table.Td><strong>{rlStats.lastReward.toFixed(2)}</strong></Table.Td>
+                  <Table.Td>
+                    <strong>{rlStats.lastReward.toFixed(2)}</strong>
+                  </Table.Td>
                 </Table.Tr>
                 <Table.Tr>
                   <Table.Td>Current Episode Reward</Table.Td>
-                  <Table.Td><strong>{rlStats.currentEpisodeReward.toFixed(2)}</strong></Table.Td>
+                  <Table.Td>
+                    <strong>{rlStats.currentEpisodeReward.toFixed(2)}</strong>
+                  </Table.Td>
                 </Table.Tr>
                 <Table.Tr>
                   <Table.Td>Average Reward</Table.Td>
-                  <Table.Td><strong>{rlStats.averageReward.toFixed(2)}</strong></Table.Td>
+                  <Table.Td>
+                    <strong>{rlStats.averageReward.toFixed(2)}</strong>
+                  </Table.Td>
                 </Table.Tr>
               </Table.Tbody>
             </Table>
@@ -721,10 +754,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
                 refY="3.5"
                 orient="auto"
               >
-                <polygon
-                  points="0 0, 10 3.5, 0 7"
-                  fill="#C82909"
-                />
+                <polygon points="0 0, 10 3.5, 0 7" fill="#C82909" />
               </marker>
               <marker
                 id="arrowhead-normal"
@@ -734,10 +764,7 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
                 refY="3.5"
                 orient="auto"
               >
-                <polygon
-                  points="0 0, 10 3.5, 0 7"
-                  fill="#94a3b8"
-                />
+                <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8" />
               </marker>
             </defs>
           </svg>
@@ -760,14 +787,26 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
             zIndex: 5,
           }}
         >
-          <div style={{ fontWeight: 700, marginBottom: 6 }}>Q-learning Update</div>
-          <div style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>
+          <div style={{ fontWeight: 700, marginBottom: 6 }}>
+            Q-learning Update
+          </div>
+          <div
+            style={{
+              fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+            }}
+          >
             Q(s,a) ← Q(s,a) + α [ r + γ · max<sub>a'</sub> Q(s', a') − Q(s,a) ]
           </div>
           <div style={{ marginTop: 6, color: "#555" }}>
-            <span><strong>α</strong>: learning rate,&nbsp;</span>
-            <span><strong>γ</strong>: discount,&nbsp;</span>
-            <span><strong>r</strong>: reward</span>
+            <span>
+              <strong>α</strong>: learning rate,&nbsp;
+            </span>
+            <span>
+              <strong>γ</strong>: discount,&nbsp;
+            </span>
+            <span>
+              <strong>r</strong>: reward
+            </span>
           </div>
         </div>
       </div>
@@ -801,92 +840,128 @@ export default function PlayGround({ onRLUpdate, config }: RLStreamProps = {}) {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 8,
+              }}
+            >
               <h3 style={{ margin: 0 }}>State Calculation History</h3>
-              <button onClick={() => setIsModalOpen(false)} style={{ border: "none", background: "#eee", borderRadius: 4, padding: "6px 10px", cursor: "pointer" }}>Close</button>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                style={{
+                  border: "none",
+                  background: "#eee",
+                  borderRadius: 4,
+                  padding: "6px 10px",
+                  cursor: "pointer",
+                }}
+              >
+                Close
+              </button>
             </div>
             <div style={{ flex: 1, overflowY: "auto" }}>
-            {(() => {
-              const node = nodes.find(n => n.id === selectedNodeId);
-              const history: any[] = (node?.data as any)?.history || [];
-              if (history.length === 0) {
-                return <div>No history yet for this node.</div>;
-              }
-              const hovered = hoveredHistoryIndex != null ? history[hoveredHistoryIndex] : null;
-              return (
-                <>
-                  <div
-                    style={{
-                      position: "sticky",
-                      top: 0,
-                      zIndex: 2,
-                      marginBottom: 10,
-                      background: hovered ? "#f8fafc" : "#fff",
-                      border: "1px solid #e2e8f0",
-                      borderRadius: 6,
-                      padding: "8px 10px",
-                      fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-                      fontSize: 12,
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    <div style={{ fontWeight: 700, marginBottom: 4 }}>Calculation</div>
-                    {hovered ? (
-                      <>
-                        <div>
-                          Q(s,a) ← Q(s,a) + α [ r + γ · max<sub>a'</sub> Q(s', a') − Q(s,a) ]
+              {(() => {
+                const node = nodes.find((n) => n.id === selectedNodeId);
+                const history: any[] = (node?.data as any)?.history || [];
+                if (history.length === 0) {
+                  return <div>No history yet for this node.</div>;
+                }
+                const hovered =
+                  hoveredHistoryIndex != null
+                    ? history[hoveredHistoryIndex]
+                    : null;
+                return (
+                  <>
+                    <div
+                      style={{
+                        position: "sticky",
+                        top: 0,
+                        zIndex: 2,
+                        marginBottom: 10,
+                        background: hovered ? "#f8fafc" : "#fff",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: 6,
+                        padding: "8px 10px",
+                        fontFamily:
+                          "ui-monospace, SFMono-Regular, Menlo, monospace",
+                        fontSize: 12,
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      <div style={{ fontWeight: 700, marginBottom: 4 }}>
+                        Calculation
+                      </div>
+                      {hovered ? (
+                        <>
+                          <div>
+                            Q(s,a) ← Q(s,a) + α [ r + γ · max<sub>a'</sub> Q(s',
+                            a') − Q(s,a) ]
+                          </div>
+                          <div style={{ marginTop: 6 }}>
+                            = {Number(hovered.currentQ).toFixed(2)} +{" "}
+                            {Number(hovered.alpha).toFixed(2)} [{" "}
+                            {Number(hovered.reward).toFixed(2)} +{" "}
+                            {Number(hovered.gamma).toFixed(2)} ·{" "}
+                            {Number(hovered.maxNextQ).toFixed(2)} −{" "}
+                            {Number(hovered.currentQ).toFixed(2)} ]
+                          </div>
+                          <div style={{ marginTop: 4 }}>
+                            = <strong>{Number(hovered.newQ).toFixed(2)}</strong>
+                          </div>
+                        </>
+                      ) : (
+                        <div style={{ color: "#64748b" }}>
+                          Hover a row to see its calculation.
                         </div>
-                        <div style={{ marginTop: 6 }}>
-                          = {Number(hovered.currentQ).toFixed(2)} + {Number(hovered.alpha).toFixed(2)} [ {Number(hovered.reward).toFixed(2)} + {Number(hovered.gamma).toFixed(2)} · {Number(hovered.maxNextQ).toFixed(2)} − {Number(hovered.currentQ).toFixed(2)} ]
-                        </div>
-                        <div style={{ marginTop: 4 }}>
-                          = <strong>{Number(hovered.newQ).toFixed(2)}</strong>
-                        </div>
-                      </>
-                    ) : (
-                      <div style={{ color: "#64748b" }}>Hover a row to see its calculation.</div>
-                    )}
-                  </div>
-                  <Table striped highlightOnHover>
-                  <Table.Thead>
-                    <Table.Tr>
-                      <Table.Th>Time</Table.Th>
-                      <Table.Th>Episode</Table.Th>
-                      <Table.Th>Step</Table.Th>
-                      <Table.Th>Reward</Table.Th>
-                      <Table.Th>Action</Table.Th>
-                      <Table.Th>Q(s,a)</Table.Th>
-                      <Table.Th>max Q(s',a')</Table.Th>
-                      <Table.Th>Target</Table.Th>
-                      <Table.Th>New Q</Table.Th>
-                      <Table.Th>α</Table.Th>
-                      <Table.Th>γ</Table.Th>
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    {history.map((h, idx) => (
-                      <Table.Tr
-                        key={idx}
-                        onMouseEnter={() => setHoveredHistoryIndex(idx)}
-                      >
-                        <Table.Td>{new Date(h.timestamp).toLocaleTimeString()}</Table.Td>
-                        <Table.Td>{h.episode}</Table.Td>
-                        <Table.Td>{h.step}</Table.Td>
-                        <Table.Td>{h.reward?.toFixed?.(2) ?? h.reward}</Table.Td>
-                        <Table.Td>{h.action}</Table.Td>
-                        <Table.Td>{h.currentQ?.toFixed?.(2)}</Table.Td>
-                        <Table.Td>{h.maxNextQ?.toFixed?.(2)}</Table.Td>
-                        <Table.Td>{h.target?.toFixed?.(2)}</Table.Td>
-                        <Table.Td>{h.newQ?.toFixed?.(2)}</Table.Td>
-                        <Table.Td>{h.alpha}</Table.Td>
-                        <Table.Td>{h.gamma}</Table.Td>
-                      </Table.Tr>
-                    ))}
-                  </Table.Tbody>
-                  </Table>
-                </>
-              );
-            })()}
+                      )}
+                    </div>
+                    <Table striped highlightOnHover>
+                      <Table.Thead>
+                        <Table.Tr>
+                          <Table.Th>Time</Table.Th>
+                          <Table.Th>Episode</Table.Th>
+                          <Table.Th>Step</Table.Th>
+                          <Table.Th>Reward</Table.Th>
+                          <Table.Th>Action</Table.Th>
+                          <Table.Th>Q(s,a)</Table.Th>
+                          <Table.Th>max Q(s',a')</Table.Th>
+                          <Table.Th>Target</Table.Th>
+                          <Table.Th>New Q</Table.Th>
+                          <Table.Th>α</Table.Th>
+                          <Table.Th>γ</Table.Th>
+                        </Table.Tr>
+                      </Table.Thead>
+                      <Table.Tbody>
+                        {history.map((h, idx) => (
+                          <Table.Tr
+                            key={idx}
+                            onMouseEnter={() => setHoveredHistoryIndex(idx)}
+                          >
+                            <Table.Td>
+                              {new Date(h.timestamp).toLocaleTimeString()}
+                            </Table.Td>
+                            <Table.Td>{h.episode}</Table.Td>
+                            <Table.Td>{h.step}</Table.Td>
+                            <Table.Td>
+                              {h.reward?.toFixed?.(2) ?? h.reward}
+                            </Table.Td>
+                            <Table.Td>{h.action}</Table.Td>
+                            <Table.Td>{h.currentQ?.toFixed?.(2)}</Table.Td>
+                            <Table.Td>{h.maxNextQ?.toFixed?.(2)}</Table.Td>
+                            <Table.Td>{h.target?.toFixed?.(2)}</Table.Td>
+                            <Table.Td>{h.newQ?.toFixed?.(2)}</Table.Td>
+                            <Table.Td>{h.alpha}</Table.Td>
+                            <Table.Td>{h.gamma}</Table.Td>
+                          </Table.Tr>
+                        ))}
+                      </Table.Tbody>
+                    </Table>
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>

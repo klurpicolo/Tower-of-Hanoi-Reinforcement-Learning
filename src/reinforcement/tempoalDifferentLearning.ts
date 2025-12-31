@@ -2,7 +2,6 @@ import { getRLStream } from "./rlStreamHelper";
 import { Action, keyOf, type State } from "../features/hanoi/rl";
 import { publishEpisodeEvent } from "../state/rlAtoms";
 
-
 export class TDLearning {
   private rlStream = getRLStream();
   private qTable: Map<string, number> = new Map();
@@ -326,7 +325,7 @@ export class TDLearning {
     const actionKey = this.getActionKey(action);
     const qKey = `${stateKey}_${actionKey}`;
 
-    console.log(`qKey ${qKey} value ${value}`)
+    console.log(`qKey ${qKey} value ${value}`);
     this.qTable.set(qKey, value);
   }
 
@@ -394,7 +393,9 @@ export class TDLearning {
     const target = reward + this.discountFactor * maxNextQ;
     const newQ = currentQ + this.learningRate * (target - currentQ);
 
-    console.log(`state ${state} action ${action} currnetQ ${currentQ} newQ ${newQ} reward ${reward}`)
+    console.log(
+      `state ${state} action ${action} currnetQ ${currentQ} newQ ${newQ} reward ${reward}`,
+    );
 
     this.setQValue(state, action, newQ);
 
@@ -425,10 +426,10 @@ export class TDLearning {
   getBestActionForState(state: State): Action | null {
     const validActions = this.getValidActions(state);
     if (validActions.length === 0) return null;
-    
+
     let bestAction = validActions[0];
     let bestQValue = this.getQValue(state, bestAction);
-    
+
     for (const action of validActions) {
       const qValue = this.getQValue(state, action);
       if (qValue > bestQValue) {
@@ -436,7 +437,7 @@ export class TDLearning {
         bestAction = action;
       }
     }
-    
+
     return bestAction;
   }
 
@@ -445,21 +446,21 @@ export class TDLearning {
    */
   getAllBestActions(): Map<string, Action> {
     const bestActions = new Map<string, Action>();
-    
+
     for (let d0 = 0; d0 < 3; d0++) {
       for (let d1 = 0; d1 < 3; d1++) {
         for (let d2 = 0; d2 < 3; d2++) {
           const state: State = [d0, d1, d2];
           const stateKey = keyOf(state);
           const bestAction = this.getBestActionForState(state);
-          
+
           if (bestAction) {
             bestActions.set(stateKey, bestAction);
           }
         }
       }
     }
-    
+
     return bestActions;
   }
 

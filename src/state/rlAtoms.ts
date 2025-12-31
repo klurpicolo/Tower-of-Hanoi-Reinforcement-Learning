@@ -8,11 +8,16 @@ export const rlStore = createStore();
 // Single-event atoms used as pub/sub channels
 // Use a counter to ensure each event is unique and triggers re-renders
 let rlUpdateCounter = 0;
-export const rlUpdateEventAtom = atom<{ update: RLUpdate; id: number } | null>(null);
+export const rlUpdateEventAtom = atom<{ update: RLUpdate; id: number } | null>(
+  null,
+);
 
 export type EpisodeEvent = { episode: number; reward: number; epsilon: number };
 let episodeCounter = 0;
-export const episodeEventAtom = atom<{ event: EpisodeEvent; id: number } | null>(null);
+export const episodeEventAtom = atom<{
+  event: EpisodeEvent;
+  id: number;
+} | null>(null);
 
 // Incrementing counter to signal resets across the app
 export const resetSignalAtom = atom(0);
